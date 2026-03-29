@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hono Codebase Detective</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body { background: #0d1117; color: #e6edf3; font-family: 'Inter', sans-serif; line-height: 1.6; }
+  nav { position: fixed; top: 0; width: 100%; background: rgba(13,17,23,0.95); backdrop-filter: blur(12px);
+    border-bottom: 1px solid #21262d; z-index: 100; padding: 0 2rem; }
+  nav ul { display: flex; list-style: none; max-width: 1200px; margin: 0 auto; gap: 0; }
+  nav a { display: block; padding: 1rem 1.2rem; color: #8b949e; text-decoration: none; font-size: 0.85rem;
+    font-weight: 500; letter-spacing: 0.02em; transition: color 0.2s; border-bottom: 2px solid transparent; }
+  nav a:hover { color: #58a6ff; border-bottom-color: #58a6ff; }
+  .hero { padding: 8rem 2rem 4rem; text-align: center; background: linear-gradient(180deg, #161b22 0%, #0d1117 100%);
+    border-bottom: 1px solid #21262d; }
+  .hero h1 { font-size: 3rem; font-weight: 700; background: linear-gradient(135deg, #58a6ff, #bc8cff, #f778ba);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin-bottom: 0.5rem; }
+  .hero p { font-size: 1.1rem; color: #8b949e; font-weight: 300; }
+  .hero .badge { display: inline-block; margin-top: 1rem; padding: 0.4rem 1rem; border-radius: 2rem;
+    border: 1px solid #30363d; color: #58a6ff; font-size: 0.8rem; font-weight: 500; }
+  section { max-width: 1200px; margin: 0 auto; padding: 4rem 2rem; }
+  section h2 { font-size: 1.8rem; font-weight: 600; margin-bottom: 0.5rem; color: #e6edf3;
+    padding-bottom: 0.5rem; border-bottom: 1px solid #21262d; }
+  section h2 span { color: #58a6ff; }
+  .section-desc { color: #8b949e; margin-bottom: 2rem; font-size: 0.95rem; }
+  .mermaid-container { background: #161b22; border: 1px solid #21262d; border-radius: 12px;
+    padding: 2rem; overflow-x: auto; margin-bottom: 2rem; }
+  .mermaid { display: flex; justify-content: center; }
+  #d3-container { background: #1a1a2e; border: 1px solid #21262d; border-radius: 12px;
+    overflow: hidden; position: relative; height: 600px; }
+  #d3-container svg { width: 100%; height: 100%; }
+  #d3-search { position: absolute; top: 16px; left: 16px; background: #16213e; border: 1px solid #0f3460;
+    color: #fff; padding: 8px 14px; border-radius: 6px; font-size: 14px; width: 240px; outline: none;
+    font-family: 'Inter', sans-serif; z-index: 5; }
+  #d3-search:focus { border-color: #e94560; }
+  #d3-search::placeholder { color: #555; }
+  #d3-stats { position: absolute; top: 16px; right: 16px; color: #8b949e; font-size: 0.8rem;
+    background: rgba(22,33,62,0.9); padding: 6px 12px; border-radius: 6px; }
+  #d3-tooltip { position: fixed; pointer-events: none; background: rgba(15,52,96,0.95); border: 1px solid #e94560;
+    color: #fff; padding: 8px 12px; border-radius: 6px; font-size: 13px; display: none; z-index: 200; white-space: nowrap; }
+  #d3-legend { position: absolute; bottom: 16px; left: 16px; background: rgba(22,33,62,0.92);
+    border: 1px solid #0f3460; border-radius: 8px; padding: 12px 16px; z-index: 5; }
+  #d3-legend h4 { font-size: 0.7rem; color: #8b949e; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
+  .leg-item { display: flex; align-items: center; gap: 6px; font-size: 0.75rem; margin: 2px 0; color: #ccc; }
+  .leg-dot { width: 10px; height: 10px; border-radius: 50%; }
+  .audit-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+  .audit-table th { background: #161b22; color: #8b949e; text-align: left; padding: 0.8rem 1rem;
+    border-bottom: 2px solid #21262d; font-weight: 600; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; }
+  .audit-table td { padding: 0.8rem 1rem; border-bottom: 1px solid #21262d; vertical-align: top; }
+  .audit-table tr:hover { background: #161b22; }
+  .audit-table code { background: #1f2937; padding: 2px 6px; border-radius: 4px; font-size: 0.82rem; color: #79c0ff; }
+  .badge-sev { padding: 3px 10px; border-radius: 2rem; font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
+  .sev-critical { background: #da3633; color: #fff; }
+  .sev-high { background: #d29922; color: #000; }
+  .sev-medium { background: #e3b341; color: #000; }
+  .sev-low { background: #484f58; color: #ccc; }
+  .status-badge { padding: 2px 8px; border-radius: 4px; font-size: 0.72rem; font-weight: 500; }
+  .st-design { background: #1f6feb33; color: #58a6ff; }
+  .st-confirmed { background: #da363333; color: #f85149; }
+  .st-fixed { background: #23883533; color: #3fb950; }
+  .st-risk { background: #d2992233; color: #d29922; }
+  .st-enhancement { background: #484f5833; color: #8b949e; }
+  footer { text-align: center; padding: 3rem 2rem; border-top: 1px solid #21262d; color: #484f58; font-size: 0.85rem; }
+  footer a { color: #58a6ff; text-decoration: none; }
+  footer a:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+
+<nav>
+  <ul>
+    <li><a href="#overview">Overview</a></li>
+    <li><a href="#architecture">Architecture</a></li>
+    <li><a href="#request-flow">Request Flow</a></li>
+    <li><a href="#state-diagram">State Diagram</a></li>
+    <li><a href="#module-map">Module Map</a></li>
+    <li><a href="#bug-audit">Bug Audit</a></li>
+  </ul>
+</nav>
+
+<header class="hero" id="overview">
+  <h1>Hono Codebase Detective</h1>
+  <p>Mini Project 1 &mdash; Mohammad Alrashed</p>
+  <div class="badge">honojs/hono v4.12.9 &bull; 184 modules &bull; 470 dependencies</div>
+</header>
+
+<section id="architecture">
+  <h2><span>#1</span> Architecture Diagram</h2>
+  <p class="section-desc">Hono's layered module architecture. Dependencies flow downward &mdash; no circular imports exist.</p>
+  <div class="mermaid-container">
+    <pre class="mermaid">
+flowchart TB
+    subgraph Layer1["Layer 1 &mdash; Utilities"]
+        u1["utils/url.ts"]
+        u2["utils/html.ts"]
+        u3["utils/cookie.ts"]
+        u4["utils/jwt"]
+        u5["utils/encode.ts"]
+        u6["utils/body.ts"]
+    end
+    subgraph Layer2["Layer 2 &mdash; Routers"]
+        r1["router.ts"]
+        r2["RegExpRouter"]
+        r3["TrieRouter"]
+        r4["SmartRouter"]
+        r5["LinearRouter"]
+        r6["PatternRouter"]
+    end
+    subgraph Layer3["Layer 3 &mdash; Core"]
+        c1["types.ts"]
+        c2["request.ts"]
+        c3["context.ts"]
+        c4["http-exception.ts"]
+    end
+    subgraph Layer4["Layer 4 &mdash; Engine"]
+        e1["compose.ts"]
+        e2["hono-base.ts"]
+        e3["hono.ts"]
+    end
+    subgraph Layer5["Layer 5 &mdash; Helpers"]
+        h1["cookie"]
+        h2["html"]
+        h3["streaming"]
+        h4["ssg"]
+        h5["websocket"]
+        h6["conninfo"]
+    end
+    subgraph Layer6["Layer 6 &mdash; Middleware"]
+        m1["jwt"]
+        m2["cors"]
+        m3["csrf"]
+        m4["logger"]
+        m5["basic-auth"]
+        m6["bearer-auth"]
+        m7["compress"]
+        m8["secure-headers"]
+    end
+    subgraph Layer7["Layer 7 &mdash; Adapters"]
+        a1["Bun"]
+        a2["Deno"]
+        a3["CF Workers"]
+        a4["AWS Lambda"]
+        a5["Vercel"]
+        a6["Netlify"]
+    end
+    subgraph Layer8["Layer 8 &mdash; Client"]
+        cl1["client.ts"]
+    end
+    Layer1 --> Layer2
+    Layer1 --> Layer3
+    Layer2 --> Layer4
+    Layer3 --> Layer4
+    Layer4 --> Layer5
+    Layer4 --> Layer6
+    Layer5 --> Layer6
+    Layer4 --> Layer7
+    Layer5 --> Layer7
+    Layer4 --> Layer8
+    style Layer1 fill:#8d99ae,color:#fff
+    style Layer2 fill:#ff9f1c,color:#fff
+    style Layer3 fill:#4361ee,color:#fff
+    style Layer4 fill:#4361ee,color:#fff
+    style Layer5 fill:#f15bb5,color:#fff
+    style Layer6 fill:#2ec4b6,color:#fff
+    style Layer7 fill:#9b5de5,color:#fff
+    style Layer8 fill:#fee440,color:#000
+    </pre>
+  </div>
+</section>
+
+<section id="request-flow">
+  <h2><span>#2</span> Request Lifecycle</h2>
+  <p class="section-desc">How a GET request flows through Hono: client &rarr; adapter &rarr; router &rarr; middleware &rarr; handler &rarr; response.</p>
+  <div class="mermaid-container">
+    <pre class="mermaid">
+sequenceDiagram
+    participant Client
+    participant Adapter as Platform Adapter
+    participant Hono as Hono / HonoBase
+    participant Router as SmartRouter
+    participant Compose as compose.ts
+    participant MW as Middleware Stack
+    participant Handler as Route Handler
+    participant Ctx as Context
+    Client->>Adapter: HTTP GET /api/users
+    Adapter->>Hono: fetch(request, env)
+    Hono->>Ctx: new Context(req, env)
+    Hono->>Router: router.match(GET, /api/users)
+    alt RegExpRouter handles pattern
+        Router-->>Hono: [[handler, paramIndexMap], paramStash]
+    else Fallback
+        Router->>Router: TrieRouter.match()
+        Router-->>Hono: [[handler, params]]
+    end
+    Hono->>Compose: compose(middleware, onError, onNotFound)
+    loop For each middleware
+        Compose->>MW: middleware[i](context, next)
+        MW->>Compose: await next()
+    end
+    Compose->>Handler: handler(context)
+    Handler->>Ctx: c.json(users)
+    loop Unwind middleware stack
+        MW->>MW: Post-processing
+    end
+    Compose-->>Hono: context.res
+    alt Error thrown
+        alt instanceof Error and onError
+            Compose->>Hono: onError(err, context)
+        else
+            Compose->>Compose: re-throw
+        end
+    end
+    Hono-->>Adapter: Response
+    Adapter-->>Client: HTTP 200 JSON
+    </pre>
+  </div>
+</section>
+
+<section id="state-diagram">
+  <h2><span>#3</span> Context State Diagram</h2>
+  <p class="section-desc">State transitions of the Context object during request processing.</p>
+  <div class="mermaid-container">
+    <pre class="mermaid">
+stateDiagram-v2
+    [*] --> Created: new Context(req, env)
+    Created --> HeadersSet: c.header()
+    Created --> StatusSet: c.status()
+    HeadersSet --> HeadersSet: more headers
+    HeadersSet --> StatusSet: c.status()
+    StatusSet --> HeadersSet: c.header()
+    StatusSet --> Finalized: c.json / c.text / c.html
+    HeadersSet --> Finalized: c.json / c.text / c.html
+    Created --> Finalized: c.json / c.text / c.html
+    Created --> Redirected: c.redirect()
+    Redirected --> Finalized: 301/302 Response
+    Finalized --> ResponseSent: return to adapter
+    Created --> ErrorState: throw Error
+    Finalized --> ErrorState: post-processing throws
+    ErrorState --> ErrorHandled: onError()
+    ErrorHandled --> Finalized: overwrites res
+    ErrorState --> Unhandled: no onError
+    Unhandled --> [*]: propagates
+    Created --> NotFound: no route
+    NotFound --> Finalized: 404
+    ResponseSent --> [*]: delivered
+    </pre>
+  </div>
+</section>
+
+<section id="module-map">
+  <h2><span>#4</span> Module Dependency Map</h2>
+  <p class="section-desc">Interactive force-directed graph of all 184 modules and 470 import relationships. Drag nodes, zoom, and search.</p>
+  <div id="d3-container">
+    <input type="text" id="d3-search" placeholder="Search files..." autocomplete="off">
+    <div id="d3-stats">184 modules &middot; 470 dependencies</div>
+    <div id="d3-legend">
+      <h4>Directories</h4>
+      <div class="leg-item"><span class="leg-dot" style="background:#4361ee"></span> core</div>
+      <div class="leg-item"><span class="leg-dot" style="background:#2ec4b6"></span> middleware</div>
+      <div class="leg-item"><span class="leg-dot" style="background:#ff9f1c"></span> router</div>
+      <div class="leg-item"><span class="leg-dot" style="background:#8d99ae"></span> utils</div>
+      <div class="leg-item"><span class="leg-dot" style="background:#9b5de5"></span> adapter</div>
+      <div class="leg-item"><span class="leg-dot" style="background:#f15bb5"></span> helper</div>
+      <div class="leg-item"><span class="leg-dot" style="background:#00f5d4"></span> jsx</div>
+      <div class="leg-item"><span class="leg-dot" style="background:#fee440"></span> client</div>
+    </div>
+    <svg></svg>
+  </div>
+  <div id="d3-tooltip"></div>
+</section>
+
+<section id="bug-audit">
+  <h2><span>#5</span> Bug Audit Summary</h2>
+  <p class="section-desc">Findings from AI-assisted source code review of honojs/hono v4.12.9.</p>
+  <table class="audit-table">
+    <thead><tr><th>#</th><th>Severity</th><th>File</th><th>Finding</th><th>Status</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td><span class="badge-sev sev-medium">MEDIUM</span></td><td><code>compose.ts:53</code></td><td>Error handling only catches <code>Error</code> instances. Non-Error throws bypass <code>onError</code> and propagate uncaught.</td><td><span class="status-badge st-design">By Design</span></td></tr>
+      <tr><td>2</td><td><span class="badge-sev sev-low">LOW</span></td><td><code>compose.ts:34</code></td><td><code>next()</code> called multiple times throws generic Error with no middleware context.</td><td><span class="status-badge st-confirmed">Confirmed</span></td></tr>
+      <tr><td>3</td><td><span class="badge-sev sev-medium">MEDIUM</span></td><td><code>smart-router/</code></td><td>SmartRouter silently swallows <code>UnsupportedPathError</code> from RegExpRouter on fallback.</td><td><span class="status-badge st-design">By Design</span></td></tr>
+      <tr><td>4</td><td><span class="badge-sev sev-low">LOW</span></td><td><code>hono-base.ts</code></td><td>Default errorHandler returns plain text with no request ID for production debugging.</td><td><span class="status-badge st-enhancement">Enhancement</span></td></tr>
+      <tr><td>5</td><td><span class="badge-sev sev-high">HIGH</span></td><td><code>utils/jwt/</code></td><td>JWT implements crypto from scratch via Web Crypto API. Custom crypto carries higher risk.</td><td><span class="status-badge st-risk">Risk</span></td></tr>
+      <tr><td>6</td><td><span class="badge-sev sev-medium">MEDIUM</span></td><td><code>middleware/jwt/</code></td><td>JWT middleware depends on internal custom crypto. Edge cases depend on custom code correctness.</td><td><span class="status-badge st-risk">Risk</span></td></tr>
+      <tr><td>7</td><td><span class="badge-sev sev-low">LOW</span></td><td><code>package.json</code></td><td>Home directory package.json had two concatenated JSON objects (malformed). Broke npm system-wide.</td><td><span class="status-badge st-fixed">Fixed</span></td></tr>
+      <tr><td>8</td><td><span class="badge-sev sev-low">LOW</span></td><td><code>.gitignore</code></td><td>Originally only had <code>node_modules/</code>. Missing .env, dist/, .claude/, *.log.</td><td><span class="status-badge st-fixed">Fixed</span></td></tr>
+    </tbody>
+  </table>
+</section>
+
+<footer>
+  <p>Hono Codebase Detective &mdash; Mini Project 1 &bull; Mohammad Alrashed</p>
+  <p><a href="https://github.com/DatariusAI/codebase-detective-hono" target="_blank">github.com/DatariusAI/codebase-detective-hono</a></p>
+</footer>
+
+<script>
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'dark',
+  themeVariables: {
+    primaryColor: '#21262d', primaryTextColor: '#e6edf3', primaryBorderColor: '#30363d',
+    lineColor: '#58a6ff', secondaryColor: '#161b22', tertiaryColor: '#0d1117'
+  },
+  flowchart: { htmlLabels: true, curve: 'basis' },
+  sequence: { actorMargin: 50, messageMargin: 40 }
+});
+
+(function() {
+  var graphNodes = [{"id":"adapter/aws-lambda/conninfo.ts","label":"conninfo.ts","dir":"adapter"},{"id":"adapter/aws-lambda/handler.ts","label":"handler.ts","dir":"adapter"},{"id":"adapter/aws-lambda/index.ts","label":"index.ts","dir":"adapter"},{"id":"adapter/aws-lambda/types.ts","label":"types.ts","dir":"adapter"},{"id":"adapter/bun/conninfo.ts","label":"conninfo.ts","dir":"adapter"},{"id":"adapter/bun/index.ts","label":"index.ts","dir":"adapter"},{"id":"adapter/bun/serve-static.ts","label":"serve-static.ts","dir":"adapter"},{"id":"adapter/bun/server.ts","label":"server.ts","dir":"adapter"},{"id":"adapter/bun/ssg.ts","label":"ssg.ts","dir":"adapter"},{"id":"adapter/bun/websocket.ts","label":"websocket.ts","dir":"adapter"},{"id":"adapter/cloudflare-pages/conninfo.ts","label":"conninfo.ts","dir":"adapter"},{"id":"adapter/cloudflare-pages/handler.ts","label":"handler.ts","dir":"adapter"},{"id":"adapter/cloudflare-pages/index.ts","label":"index.ts","dir":"adapter"},{"id":"adapter/cloudflare-workers/conninfo.ts","label":"conninfo.ts","dir":"adapter"},{"id":"adapter/cloudflare-workers/index.ts","label":"index.ts","dir":"adapter"},{"id":"adapter/cloudflare-workers/serve-static-module.ts","label":"serve-static-module.ts","dir":"adapter"},{"id":"adapter/cloudflare-workers/serve-static.ts","label":"serve-static.ts","dir":"adapter"},{"id":"adapter/cloudflare-workers/utils.ts","label":"utils.ts","dir":"adapter"},{"id":"adapter/cloudflare-workers/websocket.ts","label":"websocket.ts","dir":"adapter"},{"id":"adapter/deno/conninfo.ts","label":"conninfo.ts","dir":"adapter"},{"id":"adapter/deno/index.ts","label":"index.ts","dir":"adapter"},{"id":"adapter/deno/serve-static.ts","label":"serve-static.ts","dir":"adapter"},{"id":"adapter/deno/ssg.ts","label":"ssg.ts","dir":"adapter"},{"id":"adapter/deno/websocket.ts","label":"websocket.ts","dir":"adapter"},{"id":"adapter/lambda-edge/conninfo.ts","label":"conninfo.ts","dir":"adapter"},{"id":"adapter/lambda-edge/handler.ts","label":"handler.ts","dir":"adapter"},{"id":"adapter/lambda-edge/index.ts","label":"index.ts","dir":"adapter"},{"id":"adapter/netlify/conninfo.ts","label":"conninfo.ts","dir":"adapter"},{"id":"adapter/netlify/handler.ts","label":"handler.ts","dir":"adapter"},{"id":"adapter/netlify/index.ts","label":"index.ts","dir":"adapter"},{"id":"adapter/netlify/mod.ts","label":"mod.ts","dir":"adapter"},{"id":"adapter/service-worker/handler.ts","label":"handler.ts","dir":"adapter"},{"id":"adapter/service-worker/index.ts","label":"index.ts","dir":"adapter"},{"id":"adapter/service-worker/types.ts","label":"types.ts","dir":"adapter"},{"id":"adapter/vercel/conninfo.ts","label":"conninfo.ts","dir":"adapter"},{"id":"adapter/vercel/handler.ts","label":"handler.ts","dir":"adapter"},{"id":"adapter/vercel/index.ts","label":"index.ts","dir":"adapter"},{"id":"client/client.ts","label":"client.ts","dir":"client"},{"id":"client/fetch-result-please.ts","label":"fetch-result-please.ts","dir":"client"},{"id":"client/index.ts","label":"index.ts","dir":"client"},{"id":"client/types.ts","label":"types.ts","dir":"client"},{"id":"client/utils.ts","label":"utils.ts","dir":"client"},{"id":"compose.ts","label":"compose.ts","dir":"core"},{"id":"context.ts","label":"context.ts","dir":"core"},{"id":"helper/accepts/accepts.ts","label":"accepts.ts","dir":"helper"},{"id":"helper/accepts/index.ts","label":"index.ts","dir":"helper"},{"id":"helper/adapter/index.ts","label":"index.ts","dir":"helper"},{"id":"helper/conninfo/index.ts","label":"index.ts","dir":"helper"},{"id":"helper/conninfo/types.ts","label":"types.ts","dir":"helper"},{"id":"helper/cookie/index.ts","label":"index.ts","dir":"helper"},{"id":"helper/css/common.ts","label":"common.ts","dir":"helper"},{"id":"helper/css/index.ts","label":"index.ts","dir":"helper"},{"id":"helper/dev/index.ts","label":"index.ts","dir":"helper"},{"id":"helper/factory/index.ts","label":"index.ts","dir":"helper"},{"id":"helper/html/index.ts","label":"index.ts","dir":"helper"},{"id":"helper/proxy/index.ts","label":"index.ts","dir":"helper"},{"id":"helper/route/index.ts","label":"index.ts","dir":"helper"},{"id":"helper/ssg/index.ts","label":"index.ts","dir":"helper"},{"id":"helper/ssg/middleware.ts","label":"middleware.ts","dir":"helper"},{"id":"helper/ssg/plugins.ts","label":"plugins.ts","dir":"helper"},{"id":"helper/ssg/ssg.ts","label":"ssg.ts","dir":"helper"},{"id":"helper/ssg/utils.ts","label":"utils.ts","dir":"helper"},{"id":"helper/streaming/index.ts","label":"index.ts","dir":"helper"},{"id":"helper/streaming/sse.ts","label":"sse.ts","dir":"helper"},{"id":"helper/streaming/stream.ts","label":"stream.ts","dir":"helper"},{"id":"helper/streaming/text.ts","label":"text.ts","dir":"helper"},{"id":"helper/streaming/utils.ts","label":"utils.ts","dir":"helper"},{"id":"helper/testing/index.ts","label":"index.ts","dir":"helper"},{"id":"helper/websocket/index.ts","label":"index.ts","dir":"helper"},{"id":"hono-base.ts","label":"hono-base.ts","dir":"core"},{"id":"hono.ts","label":"hono.ts","dir":"core"},{"id":"http-exception.ts","label":"http-exception.ts","dir":"core"},{"id":"index.ts","label":"index.ts","dir":"core"},{"id":"jsx/base.ts","label":"base.ts","dir":"jsx"},{"id":"jsx/children.ts","label":"children.ts","dir":"jsx"},{"id":"jsx/components.ts","label":"components.ts","dir":"jsx"},{"id":"jsx/constants.ts","label":"constants.ts","dir":"jsx"},{"id":"jsx/context.ts","label":"context.ts","dir":"jsx"},{"id":"jsx/dom/client.ts","label":"client.ts","dir":"jsx"},{"id":"jsx/dom/components.ts","label":"components.ts","dir":"jsx"},{"id":"jsx/dom/context.ts","label":"context.ts","dir":"jsx"},{"id":"jsx/dom/css.ts","label":"css.ts","dir":"jsx"},{"id":"jsx/dom/hooks/index.ts","label":"index.ts","dir":"jsx"},{"id":"jsx/dom/index.ts","label":"index.ts","dir":"jsx"},{"id":"jsx/dom/intrinsic-element/components.ts","label":"components.ts","dir":"jsx"},{"id":"jsx/dom/jsx-dev-runtime.ts","label":"jsx-dev-runtime.ts","dir":"jsx"},{"id":"jsx/dom/jsx-runtime.ts","label":"jsx-runtime.ts","dir":"jsx"},{"id":"jsx/dom/render.ts","label":"render.ts","dir":"jsx"},{"id":"jsx/dom/server.ts","label":"server.ts","dir":"jsx"},{"id":"jsx/dom/utils.ts","label":"utils.ts","dir":"jsx"},{"id":"jsx/hooks/index.ts","label":"index.ts","dir":"jsx"},{"id":"jsx/index.ts","label":"index.ts","dir":"jsx"},{"id":"jsx/intrinsic-element/common.ts","label":"common.ts","dir":"jsx"},{"id":"jsx/intrinsic-element/components.ts","label":"components.ts","dir":"jsx"},{"id":"jsx/intrinsic-elements.ts","label":"intrinsic-elements.ts","dir":"jsx"},{"id":"jsx/jsx-dev-runtime.ts","label":"jsx-dev-runtime.ts","dir":"jsx"},{"id":"jsx/jsx-runtime.ts","label":"jsx-runtime.ts","dir":"jsx"},{"id":"jsx/streaming.ts","label":"streaming.ts","dir":"jsx"},{"id":"jsx/types.ts","label":"types.ts","dir":"jsx"},{"id":"jsx/utils.ts","label":"utils.ts","dir":"jsx"},{"id":"middleware/basic-auth/index.ts","label":"index.ts","dir":"middleware"},{"id":"middleware/bearer-auth/index.ts","label":"index.ts","dir":"middleware"},{"id":"middleware/body-limit/index.ts","label":"index.ts","dir":"middleware"},{"id":"middleware/cache/index.ts","label":"index.ts","dir":"middleware"},{"id":"middleware/combine/index.ts","label":"index.ts","dir":"middleware"},{"id":"middleware/compress/index.ts","label":"index.ts","dir":"middleware"},{"id":"middleware/context-storage/index.ts","label":"index.ts","dir":"middleware"},{"id":"middleware/cors/index.ts","label":"index.ts","dir":"middleware"},{"id":"middleware/csrf/index.ts","label":"index.ts","dir":"middleware"},{"id":"middleware/etag/digest.ts","label":"digest.ts","dir":"middleware"},{"id":"middleware/etag/index.ts","label":"index.ts","dir":"middleware"},{"id":"middleware/ip-restriction/index.ts","label":"index.ts","dir":"middleware"},{"id":"middleware/jsx-renderer/index.ts","label":"index.ts","dir":"middleware"},{"id":"middleware/jwk/index.ts","label":"index.ts","dir":"middleware"},{"id":"middleware/jwk/jwk.ts","label":"jwk.ts","dir":"middleware"},{"id":"middleware/jwt/index.ts","label":"index.ts","dir":"middleware"},{"id":"middleware/jwt/jwt.ts","label":"jwt.ts","dir":"middleware"},{"id":"middleware/language/index.ts","label":"index.ts","dir":"middleware"},{"id":"middleware/language/language.ts","label":"language.ts","dir":"middleware"},{"id":"middleware/logger/index.ts","label":"index.ts","dir":"middleware"},{"id":"middleware/method-override/index.ts","label":"index.ts","dir":"middleware"},{"id":"middleware/powered-by/index.ts","label":"index.ts","dir":"middleware"},{"id":"middleware/pretty-json/index.ts","label":"index.ts","dir":"middleware"},{"id":"middleware/request-id/index.ts","label":"index.ts","dir":"middleware"},{"id":"middleware/request-id/request-id.ts","label":"request-id.ts","dir":"middleware"},{"id":"middleware/secure-headers/index.ts","label":"index.ts","dir":"middleware"},{"id":"middleware/secure-headers/permissions-policy.ts","label":"permissions-policy.ts","dir":"middleware"},{"id":"middleware/secure-headers/secure-headers.ts","label":"secure-headers.ts","dir":"middleware"},{"id":"middleware/serve-static/index.ts","label":"index.ts","dir":"middleware"},{"id":"middleware/serve-static/path.ts","label":"path.ts","dir":"middleware"},{"id":"middleware/timeout/index.ts","label":"index.ts","dir":"middleware"},{"id":"middleware/timing/index.ts","label":"index.ts","dir":"middleware"},{"id":"middleware/timing/timing.ts","label":"timing.ts","dir":"middleware"},{"id":"middleware/trailing-slash/index.ts","label":"index.ts","dir":"middleware"},{"id":"preset/quick.ts","label":"quick.ts","dir":"preset"},{"id":"preset/tiny.ts","label":"tiny.ts","dir":"preset"},{"id":"request.ts","label":"request.ts","dir":"core"},{"id":"request/constants.ts","label":"constants.ts","dir":"request"},{"id":"router.ts","label":"router.ts","dir":"core"},{"id":"router/linear-router/index.ts","label":"index.ts","dir":"router"},{"id":"router/linear-router/router.ts","label":"router.ts","dir":"router"},{"id":"router/pattern-router/index.ts","label":"index.ts","dir":"router"},{"id":"router/pattern-router/router.ts","label":"router.ts","dir":"router"},{"id":"router/reg-exp-router/index.ts","label":"index.ts","dir":"router"},{"id":"router/reg-exp-router/matcher.ts","label":"matcher.ts","dir":"router"},{"id":"router/reg-exp-router/node.ts","label":"node.ts","dir":"router"},{"id":"router/reg-exp-router/prepared-router.ts","label":"prepared-router.ts","dir":"router"},{"id":"router/reg-exp-router/router.ts","label":"router.ts","dir":"router"},{"id":"router/reg-exp-router/trie.ts","label":"trie.ts","dir":"router"},{"id":"router/smart-router/index.ts","label":"index.ts","dir":"router"},{"id":"router/smart-router/router.ts","label":"router.ts","dir":"router"},{"id":"router/trie-router/index.ts","label":"index.ts","dir":"router"},{"id":"router/trie-router/node.ts","label":"node.ts","dir":"router"},{"id":"router/trie-router/router.ts","label":"router.ts","dir":"router"},{"id":"types.ts","label":"types.ts","dir":"core"},{"id":"utils/accept.ts","label":"accept.ts","dir":"utils"},{"id":"utils/basic-auth.ts","label":"basic-auth.ts","dir":"utils"},{"id":"utils/body.ts","label":"body.ts","dir":"utils"},{"id":"utils/buffer.ts","label":"buffer.ts","dir":"utils"},{"id":"utils/color.ts","label":"color.ts","dir":"utils"},{"id":"utils/compress.ts","label":"compress.ts","dir":"utils"},{"id":"utils/concurrent.ts","label":"concurrent.ts","dir":"utils"},{"id":"utils/constants.ts","label":"constants.ts","dir":"utils"},{"id":"utils/cookie.ts","label":"cookie.ts","dir":"utils"},{"id":"utils/crypto.ts","label":"crypto.ts","dir":"utils"},{"id":"utils/encode.ts","label":"encode.ts","dir":"utils"},{"id":"utils/handler.ts","label":"handler.ts","dir":"utils"},{"id":"utils/headers.ts","label":"headers.ts","dir":"utils"},{"id":"utils/html.ts","label":"html.ts","dir":"utils"},{"id":"utils/http-status.ts","label":"http-status.ts","dir":"utils"},{"id":"utils/ipaddr.ts","label":"ipaddr.ts","dir":"utils"},{"id":"utils/jwt/index.ts","label":"index.ts","dir":"utils"},{"id":"utils/jwt/jwa.ts","label":"jwa.ts","dir":"utils"},{"id":"utils/jwt/jws.ts","label":"jws.ts","dir":"utils"},{"id":"utils/jwt/jwt.ts","label":"jwt.ts","dir":"utils"},{"id":"utils/jwt/types.ts","label":"types.ts","dir":"utils"},{"id":"utils/jwt/utf8.ts","label":"utf8.ts","dir":"utils"},{"id":"utils/mime.ts","label":"mime.ts","dir":"utils"},{"id":"utils/stream.ts","label":"stream.ts","dir":"utils"},{"id":"utils/types.ts","label":"types.ts","dir":"utils"},{"id":"utils/url.ts","label":"url.ts","dir":"utils"},{"id":"validator/index.ts","label":"index.ts","dir":"validator"},{"id":"validator/utils.ts","label":"utils.ts","dir":"validator"},{"id":"validator/validator.ts","label":"validator.ts","dir":"validator"}];
+  var graphLinks = [{"source":"adapter/aws-lambda/conninfo.ts","target":"context.ts"},{"source":"adapter/aws-lambda/conninfo.ts","target":"helper/conninfo/index.ts"},{"source":"adapter/aws-lambda/conninfo.ts","target":"adapter/aws-lambda/types.ts"},{"source":"adapter/aws-lambda/handler.ts","target":"hono.ts"},{"source":"adapter/aws-lambda/handler.ts","target":"types.ts"},{"source":"adapter/aws-lambda/handler.ts","target":"utils/encode.ts"},{"source":"adapter/aws-lambda/handler.ts","target":"adapter/aws-lambda/types.ts"},{"source":"adapter/aws-lambda/index.ts","target":"adapter/aws-lambda/handler.ts"},{"source":"adapter/aws-lambda/index.ts","target":"adapter/aws-lambda/conninfo.ts"},{"source":"adapter/aws-lambda/index.ts","target":"adapter/aws-lambda/types.ts"},{"source":"adapter/bun/conninfo.ts","target":"helper/conninfo/index.ts"},{"source":"adapter/bun/conninfo.ts","target":"adapter/bun/server.ts"},{"source":"adapter/bun/index.ts","target":"adapter/bun/serve-static.ts"},{"source":"adapter/bun/index.ts","target":"adapter/bun/ssg.ts"},{"source":"adapter/bun/index.ts","target":"adapter/bun/websocket.ts"},{"source":"adapter/bun/index.ts","target":"adapter/bun/conninfo.ts"},{"source":"adapter/bun/index.ts","target":"adapter/bun/server.ts"},{"source":"adapter/bun/serve-static.ts","target":"middleware/serve-static/index.ts"},{"source":"adapter/bun/serve-static.ts","target":"types.ts"},{"source":"adapter/bun/server.ts","target":"context.ts"},{"source":"adapter/bun/ssg.ts","target":"helper/ssg/index.ts"},{"source":"adapter/bun/websocket.ts","target":"helper/websocket/index.ts"},{"source":"adapter/bun/websocket.ts","target":"adapter/bun/server.ts"},{"source":"adapter/cloudflare-pages/conninfo.ts","target":"helper/conninfo/index.ts"},{"source":"adapter/cloudflare-pages/handler.ts","target":"context.ts"},{"source":"adapter/cloudflare-pages/handler.ts","target":"hono.ts"},{"source":"adapter/cloudflare-pages/handler.ts","target":"http-exception.ts"},{"source":"adapter/cloudflare-pages/handler.ts","target":"types.ts"},{"source":"adapter/cloudflare-pages/index.ts","target":"adapter/cloudflare-pages/handler.ts"},{"source":"adapter/cloudflare-pages/index.ts","target":"adapter/cloudflare-pages/conninfo.ts"},{"source":"adapter/cloudflare-workers/conninfo.ts","target":"helper/conninfo/index.ts"},{"source":"adapter/cloudflare-workers/index.ts","target":"adapter/cloudflare-workers/serve-static-module.ts"},{"source":"adapter/cloudflare-workers/index.ts","target":"adapter/cloudflare-workers/websocket.ts"},{"source":"adapter/cloudflare-workers/index.ts","target":"adapter/cloudflare-workers/conninfo.ts"},{"source":"adapter/cloudflare-workers/serve-static-module.ts","target":"types.ts"},{"source":"adapter/cloudflare-workers/serve-static-module.ts","target":"adapter/cloudflare-workers/serve-static.ts"},{"source":"adapter/cloudflare-workers/serve-static.ts","target":"middleware/serve-static/index.ts"},{"source":"adapter/cloudflare-workers/serve-static.ts","target":"types.ts"},{"source":"adapter/cloudflare-workers/serve-static.ts","target":"adapter/cloudflare-workers/utils.ts"},{"source":"adapter/cloudflare-workers/websocket.ts","target":"helper/websocket/index.ts"},{"source":"adapter/deno/conninfo.ts","target":"helper/conninfo/index.ts"},{"source":"adapter/deno/index.ts","target":"adapter/deno/serve-static.ts"},{"source":"adapter/deno/index.ts","target":"adapter/deno/ssg.ts"},{"source":"adapter/deno/index.ts","target":"adapter/deno/websocket.ts"},{"source":"adapter/deno/index.ts","target":"adapter/deno/conninfo.ts"},{"source":"adapter/deno/serve-static.ts","target":"middleware/serve-static/index.ts"},{"source":"adapter/deno/serve-static.ts","target":"types.ts"},{"source":"adapter/deno/ssg.ts","target":"helper/ssg/index.ts"},{"source":"adapter/deno/websocket.ts","target":"helper/websocket/index.ts"},{"source":"adapter/lambda-edge/conninfo.ts","target":"context.ts"},{"source":"adapter/lambda-edge/conninfo.ts","target":"helper/conninfo/index.ts"},{"source":"adapter/lambda-edge/conninfo.ts","target":"adapter/lambda-edge/handler.ts"},{"source":"adapter/lambda-edge/handler.ts","target":"hono.ts"},{"source":"adapter/lambda-edge/handler.ts","target":"utils/encode.ts"},{"source":"adapter/lambda-edge/index.ts","target":"adapter/lambda-edge/handler.ts"},{"source":"adapter/lambda-edge/index.ts","target":"adapter/lambda-edge/conninfo.ts"},{"source":"adapter/netlify/conninfo.ts","target":"context.ts"},{"source":"adapter/netlify/conninfo.ts","target":"helper/conninfo/index.ts"},{"source":"adapter/netlify/handler.ts","target":"hono.ts"},{"source":"adapter/netlify/index.ts","target":"adapter/netlify/mod.ts"},{"source":"adapter/netlify/mod.ts","target":"adapter/netlify/handler.ts"},{"source":"adapter/netlify/mod.ts","target":"adapter/netlify/conninfo.ts"},{"source":"adapter/service-worker/handler.ts","target":"hono.ts"},{"source":"adapter/service-worker/handler.ts","target":"types.ts"},{"source":"adapter/service-worker/handler.ts","target":"adapter/service-worker/types.ts"},{"source":"adapter/service-worker/index.ts","target":"hono.ts"},{"source":"adapter/service-worker/index.ts","target":"types.ts"},{"source":"adapter/service-worker/index.ts","target":"adapter/service-worker/handler.ts"},{"source":"adapter/vercel/conninfo.ts","target":"helper/conninfo/index.ts"},{"source":"adapter/vercel/handler.ts","target":"hono.ts"},{"source":"adapter/vercel/index.ts","target":"adapter/vercel/handler.ts"},{"source":"adapter/vercel/index.ts","target":"adapter/vercel/conninfo.ts"},{"source":"client/client.ts","target":"hono.ts"},{"source":"client/client.ts","target":"types.ts"},{"source":"client/client.ts","target":"utils/cookie.ts"},{"source":"client/client.ts","target":"utils/types.ts"},{"source":"client/client.ts","target":"client/types.ts"},{"source":"client/client.ts","target":"client/utils.ts"},{"source":"client/index.ts","target":"client/client.ts"},{"source":"client/index.ts","target":"client/utils.ts"},{"source":"client/index.ts","target":"client/types.ts"},{"source":"client/types.ts","target":"hono.ts"},{"source":"client/types.ts","target":"hono-base.ts"},{"source":"client/types.ts","target":"router.ts"},{"source":"client/types.ts","target":"types.ts"},{"source":"client/types.ts","target":"utils/http-status.ts"},{"source":"client/types.ts","target":"utils/types.ts"},{"source":"client/utils.ts","target":"utils/http-status.ts"},{"source":"client/utils.ts","target":"client/fetch-result-please.ts"},{"source":"client/utils.ts","target":"client/types.ts"},{"source":"compose.ts","target":"context.ts"},{"source":"compose.ts","target":"types.ts"},{"source":"context.ts","target":"request.ts"},{"source":"context.ts","target":"router.ts"},{"source":"context.ts","target":"types.ts"},{"source":"context.ts","target":"utils/headers.ts"},{"source":"context.ts","target":"utils/html.ts"},{"source":"context.ts","target":"utils/http-status.ts"},{"source":"context.ts","target":"utils/mime.ts"},{"source":"context.ts","target":"utils/types.ts"},{"source":"helper/accepts/accepts.ts","target":"context.ts"},{"source":"helper/accepts/accepts.ts","target":"utils/accept.ts"},{"source":"helper/accepts/accepts.ts","target":"utils/headers.ts"},{"source":"helper/accepts/index.ts","target":"helper/accepts/accepts.ts"},{"source":"helper/adapter/index.ts","target":"context.ts"},{"source":"helper/conninfo/index.ts","target":"helper/conninfo/types.ts"},{"source":"helper/conninfo/types.ts","target":"context.ts"},{"source":"helper/cookie/index.ts","target":"context.ts"},{"source":"helper/cookie/index.ts","target":"utils/cookie.ts"},{"source":"helper/css/index.ts","target":"helper/html/index.ts"},{"source":"helper/css/index.ts","target":"jsx/constants.ts"},{"source":"helper/css/index.ts","target":"jsx/dom/css.ts"},{"source":"helper/css/index.ts","target":"utils/html.ts"},{"source":"helper/css/index.ts","target":"helper/css/common.ts"},{"source":"helper/dev/index.ts","target":"hono.ts"},{"source":"helper/dev/index.ts","target":"types.ts"},{"source":"helper/dev/index.ts","target":"utils/color.ts"},{"source":"helper/dev/index.ts","target":"utils/handler.ts"},{"source":"helper/factory/index.ts","target":"hono.ts"},{"source":"helper/factory/index.ts","target":"hono-base.ts"},{"source":"helper/factory/index.ts","target":"types.ts"},{"source":"helper/html/index.ts","target":"utils/html.ts"},{"source":"helper/proxy/index.ts","target":"http-exception.ts"},{"source":"helper/proxy/index.ts","target":"utils/headers.ts"},{"source":"helper/route/index.ts","target":"context.ts"},{"source":"helper/route/index.ts","target":"request/constants.ts"},{"source":"helper/route/index.ts","target":"types.ts"},{"source":"helper/route/index.ts","target":"utils/url.ts"},{"source":"helper/ssg/index.ts","target":"helper/ssg/ssg.ts"},{"source":"helper/ssg/index.ts","target":"helper/ssg/middleware.ts"},{"source":"helper/ssg/index.ts","target":"helper/ssg/plugins.ts"},{"source":"helper/ssg/middleware.ts","target":"context.ts"},{"source":"helper/ssg/middleware.ts","target":"types.ts"},{"source":"helper/ssg/middleware.ts","target":"helper/ssg/utils.ts"},{"source":"helper/ssg/plugins.ts","target":"helper/html/index.ts"},{"source":"helper/ssg/plugins.ts","target":"helper/ssg/ssg.ts"},{"source":"helper/ssg/ssg.ts","target":"client/utils.ts"},{"source":"helper/ssg/ssg.ts","target":"hono.ts"},{"source":"helper/ssg/ssg.ts","target":"types.ts"},{"source":"helper/ssg/ssg.ts","target":"utils/concurrent.ts"},{"source":"helper/ssg/ssg.ts","target":"utils/mime.ts"},{"source":"helper/ssg/ssg.ts","target":"helper/ssg/middleware.ts"},{"source":"helper/ssg/ssg.ts","target":"helper/ssg/plugins.ts"},{"source":"helper/ssg/ssg.ts","target":"helper/ssg/utils.ts"},{"source":"helper/ssg/utils.ts","target":"hono.ts"},{"source":"helper/ssg/utils.ts","target":"router.ts"},{"source":"helper/ssg/utils.ts","target":"types.ts"},{"source":"helper/ssg/utils.ts","target":"utils/handler.ts"},{"source":"helper/streaming/index.ts","target":"helper/streaming/stream.ts"},{"source":"helper/streaming/index.ts","target":"helper/streaming/sse.ts"},{"source":"helper/streaming/index.ts","target":"helper/streaming/text.ts"},{"source":"helper/streaming/sse.ts","target":"context.ts"},{"source":"helper/streaming/sse.ts","target":"utils/html.ts"},{"source":"helper/streaming/sse.ts","target":"utils/stream.ts"},{"source":"helper/streaming/sse.ts","target":"helper/streaming/utils.ts"},{"source":"helper/streaming/stream.ts","target":"context.ts"},{"source":"helper/streaming/stream.ts","target":"utils/stream.ts"},{"source":"helper/streaming/stream.ts","target":"helper/streaming/utils.ts"},{"source":"helper/streaming/text.ts","target":"context.ts"},{"source":"helper/streaming/text.ts","target":"utils/stream.ts"},{"source":"helper/testing/index.ts","target":"client/index.ts"},{"source":"helper/testing/index.ts","target":"client/types.ts"},{"source":"helper/testing/index.ts","target":"context.ts"},{"source":"helper/testing/index.ts","target":"hono.ts"},{"source":"helper/testing/index.ts","target":"types.ts"},{"source":"helper/testing/index.ts","target":"utils/types.ts"},{"source":"helper/websocket/index.ts","target":"context.ts"},{"source":"helper/websocket/index.ts","target":"types.ts"},{"source":"helper/websocket/index.ts","target":"utils/http-status.ts"},{"source":"hono-base.ts","target":"compose.ts"},{"source":"hono-base.ts","target":"context.ts"},{"source":"hono-base.ts","target":"router.ts"},{"source":"hono-base.ts","target":"types.ts"},{"source":"hono-base.ts","target":"utils/constants.ts"},{"source":"hono-base.ts","target":"utils/url.ts"},{"source":"hono.ts","target":"hono-base.ts"},{"source":"hono.ts","target":"router/reg-exp-router/index.ts"},{"source":"hono.ts","target":"router/smart-router/index.ts"},{"source":"hono.ts","target":"router/trie-router/index.ts"},{"source":"hono.ts","target":"types.ts"},{"source":"http-exception.ts","target":"utils/http-status.ts"},{"source":"index.ts","target":"hono.ts"},{"source":"index.ts","target":"types.ts"},{"source":"index.ts","target":"context.ts"},{"source":"index.ts","target":"request.ts"},{"source":"index.ts","target":"client/index.ts"},{"source":"jsx/base.ts","target":"helper/html/index.ts"},{"source":"jsx/base.ts","target":"utils/html.ts"},{"source":"jsx/base.ts","target":"jsx/constants.ts"},{"source":"jsx/base.ts","target":"jsx/context.ts"},{"source":"jsx/base.ts","target":"jsx/intrinsic-element/common.ts"},{"source":"jsx/base.ts","target":"jsx/intrinsic-element/components.ts"},{"source":"jsx/base.ts","target":"jsx/intrinsic-elements.ts"},{"source":"jsx/base.ts","target":"jsx/utils.ts"},{"source":"jsx/children.ts","target":"jsx/base.ts"},{"source":"jsx/components.ts","target":"helper/html/index.ts"},{"source":"jsx/components.ts","target":"utils/html.ts"},{"source":"jsx/components.ts","target":"jsx/base.ts"},{"source":"jsx/components.ts","target":"jsx/constants.ts"},{"source":"jsx/components.ts","target":"jsx/context.ts"},{"source":"jsx/components.ts","target":"jsx/dom/components.ts"},{"source":"jsx/components.ts","target":"jsx/dom/render.ts"},{"source":"jsx/components.ts","target":"jsx/streaming.ts"},{"source":"jsx/context.ts","target":"helper/html/index.ts"},{"source":"jsx/context.ts","target":"utils/html.ts"},{"source":"jsx/context.ts","target":"jsx/base.ts"},{"source":"jsx/context.ts","target":"jsx/constants.ts"},{"source":"jsx/context.ts","target":"jsx/dom/context.ts"},{"source":"jsx/dom/client.ts","target":"jsx/base.ts"},{"source":"jsx/dom/client.ts","target":"jsx/hooks/index.ts"},{"source":"jsx/dom/client.ts","target":"jsx/dom/render.ts"},{"source":"jsx/dom/components.ts","target":"jsx/components.ts"},{"source":"jsx/dom/components.ts","target":"jsx/constants.ts"},{"source":"jsx/dom/components.ts","target":"jsx/dom/jsx-runtime.ts"},{"source":"jsx/dom/context.ts","target":"jsx/base.ts"},{"source":"jsx/dom/context.ts","target":"jsx/constants.ts"},{"source":"jsx/dom/context.ts","target":"jsx/context.ts"},{"source":"jsx/dom/context.ts","target":"jsx/dom/utils.ts"},{"source":"jsx/dom/css.ts","target":"helper/css/common.ts"},{"source":"jsx/dom/hooks/index.ts","target":"jsx/constants.ts"},{"source":"jsx/dom/hooks/index.ts","target":"jsx/context.ts"},{"source":"jsx/dom/hooks/index.ts","target":"jsx/hooks/index.ts"},{"source":"jsx/dom/hooks/index.ts","target":"jsx/dom/context.ts"},{"source":"jsx/dom/index.ts","target":"jsx/base.ts"},{"source":"jsx/dom/index.ts","target":"jsx/children.ts"},{"source":"jsx/dom/index.ts","target":"jsx/constants.ts"},{"source":"jsx/dom/index.ts","target":"jsx/context.ts"},{"source":"jsx/dom/index.ts","target":"jsx/hooks/index.ts"},{"source":"jsx/dom/index.ts","target":"jsx/dom/components.ts"},{"source":"jsx/dom/index.ts","target":"jsx/dom/context.ts"},{"source":"jsx/dom/index.ts","target":"jsx/dom/hooks/index.ts"},{"source":"jsx/dom/index.ts","target":"jsx/dom/jsx-runtime.ts"},{"source":"jsx/dom/index.ts","target":"jsx/dom/render.ts"},{"source":"jsx/dom/index.ts","target":"jsx/types.ts"},{"source":"jsx/dom/intrinsic-element/components.ts","target":"jsx/base.ts"},{"source":"jsx/dom/intrinsic-element/components.ts","target":"jsx/context.ts"},{"source":"jsx/dom/intrinsic-element/components.ts","target":"jsx/hooks/index.ts"},{"source":"jsx/dom/intrinsic-element/components.ts","target":"jsx/intrinsic-element/common.ts"},{"source":"jsx/dom/intrinsic-element/components.ts","target":"jsx/intrinsic-elements.ts"},{"source":"jsx/dom/intrinsic-element/components.ts","target":"jsx/types.ts"},{"source":"jsx/dom/intrinsic-element/components.ts","target":"jsx/dom/hooks/index.ts"},{"source":"jsx/dom/intrinsic-element/components.ts","target":"jsx/dom/render.ts"},{"source":"jsx/dom/jsx-dev-runtime.ts","target":"jsx/base.ts"},{"source":"jsx/dom/jsx-dev-runtime.ts","target":"jsx/dom/intrinsic-element/components.ts"},{"source":"jsx/dom/jsx-runtime.ts","target":"jsx/dom/jsx-dev-runtime.ts"},{"source":"jsx/dom/render.ts","target":"jsx/base.ts"},{"source":"jsx/dom/render.ts","target":"jsx/children.ts"},{"source":"jsx/dom/render.ts","target":"jsx/constants.ts"},{"source":"jsx/dom/render.ts","target":"jsx/context.ts"},{"source":"jsx/dom/render.ts","target":"jsx/hooks/index.ts"},{"source":"jsx/dom/render.ts","target":"jsx/utils.ts"},{"source":"jsx/dom/render.ts","target":"jsx/dom/context.ts"},{"source":"jsx/dom/server.ts","target":"utils/html.ts"},{"source":"jsx/dom/server.ts","target":"jsx/base.ts"},{"source":"jsx/dom/server.ts","target":"jsx/streaming.ts"},{"source":"jsx/dom/utils.ts","target":"jsx/constants.ts"},{"source":"jsx/hooks/index.ts","target":"jsx/base.ts"},{"source":"jsx/hooks/index.ts","target":"jsx/constants.ts"},{"source":"jsx/hooks/index.ts","target":"jsx/dom/render.ts"},{"source":"jsx/index.ts","target":"jsx/base.ts"},{"source":"jsx/index.ts","target":"jsx/children.ts"},{"source":"jsx/index.ts","target":"jsx/components.ts"},{"source":"jsx/index.ts","target":"jsx/context.ts"},{"source":"jsx/index.ts","target":"jsx/dom/hooks/index.ts"},{"source":"jsx/index.ts","target":"jsx/hooks/index.ts"},{"source":"jsx/index.ts","target":"jsx/streaming.ts"},{"source":"jsx/index.ts","target":"jsx/types.ts"},{"source":"jsx/index.ts","target":"jsx/intrinsic-elements.ts"},{"source":"jsx/intrinsic-element/common.ts","target":"jsx/base.ts"},{"source":"jsx/intrinsic-element/components.ts","target":"helper/html/index.ts"},{"source":"jsx/intrinsic-element/components.ts","target":"utils/html.ts"},{"source":"jsx/intrinsic-element/components.ts","target":"jsx/base.ts"},{"source":"jsx/intrinsic-element/components.ts","target":"jsx/children.ts"},{"source":"jsx/intrinsic-element/components.ts","target":"jsx/constants.ts"},{"source":"jsx/intrinsic-element/components.ts","target":"jsx/context.ts"},{"source":"jsx/intrinsic-element/components.ts","target":"jsx/intrinsic-elements.ts"},{"source":"jsx/intrinsic-element/components.ts","target":"jsx/types.ts"},{"source":"jsx/intrinsic-element/components.ts","target":"jsx/intrinsic-element/common.ts"},{"source":"jsx/intrinsic-elements.ts","target":"utils/mime.ts"},{"source":"jsx/intrinsic-elements.ts","target":"utils/types.ts"},{"source":"jsx/jsx-dev-runtime.ts","target":"utils/html.ts"},{"source":"jsx/jsx-dev-runtime.ts","target":"jsx/base.ts"},{"source":"jsx/jsx-runtime.ts","target":"jsx/jsx-dev-runtime.ts"},{"source":"jsx/jsx-runtime.ts","target":"helper/html/index.ts"},{"source":"jsx/jsx-runtime.ts","target":"utils/html.ts"},{"source":"jsx/jsx-runtime.ts","target":"jsx/utils.ts"},{"source":"jsx/streaming.ts","target":"helper/html/index.ts"},{"source":"jsx/streaming.ts","target":"utils/html.ts"},{"source":"jsx/streaming.ts","target":"jsx/base.ts"},{"source":"jsx/streaming.ts","target":"jsx/components.ts"},{"source":"jsx/streaming.ts","target":"jsx/constants.ts"},{"source":"jsx/streaming.ts","target":"jsx/context.ts"},{"source":"jsx/streaming.ts","target":"jsx/dom/components.ts"},{"source":"jsx/streaming.ts","target":"jsx/dom/render.ts"},{"source":"jsx/types.ts","target":"jsx/base.ts"},{"source":"jsx/types.ts","target":"jsx/intrinsic-elements.ts"},{"source":"jsx/types.ts","target":"jsx/hooks/index.ts"},{"source":"jsx/types.ts","target":"jsx/context.ts"},{"source":"middleware/basic-auth/index.ts","target":"context.ts"},{"source":"middleware/basic-auth/index.ts","target":"http-exception.ts"},{"source":"middleware/basic-auth/index.ts","target":"types.ts"},{"source":"middleware/basic-auth/index.ts","target":"utils/basic-auth.ts"},{"source":"middleware/basic-auth/index.ts","target":"utils/buffer.ts"},{"source":"middleware/bearer-auth/index.ts","target":"context.ts"},{"source":"middleware/bearer-auth/index.ts","target":"http-exception.ts"},{"source":"middleware/bearer-auth/index.ts","target":"types.ts"},{"source":"middleware/bearer-auth/index.ts","target":"utils/buffer.ts"},{"source":"middleware/bearer-auth/index.ts","target":"utils/http-status.ts"},{"source":"middleware/body-limit/index.ts","target":"context.ts"},{"source":"middleware/body-limit/index.ts","target":"http-exception.ts"},{"source":"middleware/body-limit/index.ts","target":"types.ts"},{"source":"middleware/cache/index.ts","target":"context.ts"},{"source":"middleware/cache/index.ts","target":"types.ts"},{"source":"middleware/cache/index.ts","target":"utils/http-status.ts"},{"source":"middleware/combine/index.ts","target":"compose.ts"},{"source":"middleware/combine/index.ts","target":"context.ts"},{"source":"middleware/combine/index.ts","target":"router.ts"},{"source":"middleware/combine/index.ts","target":"router/trie-router/index.ts"},{"source":"middleware/combine/index.ts","target":"types.ts"},{"source":"middleware/compress/index.ts","target":"types.ts"},{"source":"middleware/compress/index.ts","target":"utils/compress.ts"},{"source":"middleware/context-storage/index.ts","target":"context.ts"},{"source":"middleware/context-storage/index.ts","target":"types.ts"},{"source":"middleware/cors/index.ts","target":"context.ts"},{"source":"middleware/cors/index.ts","target":"types.ts"},{"source":"middleware/csrf/index.ts","target":"context.ts"},{"source":"middleware/csrf/index.ts","target":"http-exception.ts"},{"source":"middleware/csrf/index.ts","target":"types.ts"},{"source":"middleware/etag/index.ts","target":"types.ts"},{"source":"middleware/etag/index.ts","target":"middleware/etag/digest.ts"},{"source":"middleware/ip-restriction/index.ts","target":"helper/conninfo/index.ts"},{"source":"middleware/ip-restriction/index.ts","target":"http-exception.ts"},{"source":"middleware/ip-restriction/index.ts","target":"utils/ipaddr.ts"},{"source":"middleware/jsx-renderer/index.ts","target":"context.ts"},{"source":"middleware/jsx-renderer/index.ts","target":"helper/html/index.ts"},{"source":"middleware/jsx-renderer/index.ts","target":"jsx/index.ts"},{"source":"middleware/jsx-renderer/index.ts","target":"jsx/streaming.ts"},{"source":"middleware/jsx-renderer/index.ts","target":"types.ts"},{"source":"middleware/jsx-renderer/index.ts","target":"utils/html.ts"},{"source":"middleware/jwk/index.ts","target":"middleware/jwk/jwk.ts"},{"source":"middleware/jwk/jwk.ts","target":"context.ts"},{"source":"middleware/jwk/jwk.ts","target":"helper/cookie/index.ts"},{"source":"middleware/jwk/jwk.ts","target":"http-exception.ts"},{"source":"middleware/jwk/jwk.ts","target":"types.ts"},{"source":"middleware/jwk/jwk.ts","target":"utils/cookie.ts"},{"source":"middleware/jwk/jwk.ts","target":"utils/jwt/index.ts"},{"source":"middleware/jwk/jwk.ts","target":"utils/jwt/jwa.ts"},{"source":"middleware/jwk/jwk.ts","target":"utils/jwt/jws.ts"},{"source":"middleware/jwk/jwk.ts","target":"utils/jwt/jwt.ts"},{"source":"middleware/jwt/index.ts","target":"middleware/jwt/jwt.ts"},{"source":"middleware/jwt/index.ts","target":"utils/jwt/jwa.ts"},{"source":"middleware/jwt/jwt.ts","target":"context.ts"},{"source":"middleware/jwt/jwt.ts","target":"helper/cookie/index.ts"},{"source":"middleware/jwt/jwt.ts","target":"http-exception.ts"},{"source":"middleware/jwt/jwt.ts","target":"types.ts"},{"source":"middleware/jwt/jwt.ts","target":"utils/cookie.ts"},{"source":"middleware/jwt/jwt.ts","target":"utils/jwt/index.ts"},{"source":"middleware/jwt/jwt.ts","target":"utils/jwt/jwa.ts"},{"source":"middleware/jwt/jwt.ts","target":"utils/jwt/jws.ts"},{"source":"middleware/jwt/jwt.ts","target":"utils/jwt/jwt.ts"},{"source":"middleware/language/index.ts","target":"middleware/language/language.ts"},{"source":"middleware/language/language.ts","target":"context.ts"},{"source":"middleware/language/language.ts","target":"helper/cookie/index.ts"},{"source":"middleware/language/language.ts","target":"types.ts"},{"source":"middleware/language/language.ts","target":"utils/accept.ts"},{"source":"middleware/logger/index.ts","target":"types.ts"},{"source":"middleware/logger/index.ts","target":"utils/color.ts"},{"source":"middleware/method-override/index.ts","target":"context.ts"},{"source":"middleware/method-override/index.ts","target":"hono.ts"},{"source":"middleware/method-override/index.ts","target":"types.ts"},{"source":"middleware/method-override/index.ts","target":"utils/body.ts"},{"source":"middleware/powered-by/index.ts","target":"types.ts"},{"source":"middleware/pretty-json/index.ts","target":"types.ts"},{"source":"middleware/request-id/index.ts","target":"middleware/request-id/request-id.ts"},{"source":"middleware/request-id/request-id.ts","target":"context.ts"},{"source":"middleware/request-id/request-id.ts","target":"types.ts"},{"source":"middleware/secure-headers/index.ts","target":"middleware/secure-headers/secure-headers.ts"},{"source":"middleware/secure-headers/secure-headers.ts","target":"context.ts"},{"source":"middleware/secure-headers/secure-headers.ts","target":"types.ts"},{"source":"middleware/secure-headers/secure-headers.ts","target":"utils/encode.ts"},{"source":"middleware/secure-headers/secure-headers.ts","target":"middleware/secure-headers/permissions-policy.ts"},{"source":"middleware/serve-static/index.ts","target":"context.ts"},{"source":"middleware/serve-static/index.ts","target":"types.ts"},{"source":"middleware/serve-static/index.ts","target":"utils/compress.ts"},{"source":"middleware/serve-static/index.ts","target":"utils/mime.ts"},{"source":"middleware/serve-static/index.ts","target":"utils/url.ts"},{"source":"middleware/serve-static/index.ts","target":"middleware/serve-static/path.ts"},{"source":"middleware/timeout/index.ts","target":"context.ts"},{"source":"middleware/timeout/index.ts","target":"http-exception.ts"},{"source":"middleware/timeout/index.ts","target":"types.ts"},{"source":"middleware/timing/index.ts","target":"middleware/timing/timing.ts"},{"source":"middleware/timing/timing.ts","target":"context.ts"},{"source":"middleware/timing/timing.ts","target":"types.ts"},{"source":"middleware/trailing-slash/index.ts","target":"types.ts"},{"source":"preset/quick.ts","target":"hono-base.ts"},{"source":"preset/quick.ts","target":"router/linear-router/index.ts"},{"source":"preset/quick.ts","target":"router/smart-router/index.ts"},{"source":"preset/quick.ts","target":"router/trie-router/index.ts"},{"source":"preset/quick.ts","target":"types.ts"},{"source":"preset/tiny.ts","target":"hono-base.ts"},{"source":"preset/tiny.ts","target":"router/pattern-router/index.ts"},{"source":"preset/tiny.ts","target":"types.ts"},{"source":"request.ts","target":"http-exception.ts"},{"source":"request.ts","target":"request/constants.ts"},{"source":"request.ts","target":"router.ts"},{"source":"request.ts","target":"types.ts"},{"source":"request.ts","target":"utils/body.ts"},{"source":"request.ts","target":"utils/headers.ts"},{"source":"request.ts","target":"utils/types.ts"},{"source":"request.ts","target":"utils/url.ts"},{"source":"router/linear-router/index.ts","target":"router/linear-router/router.ts"},{"source":"router/linear-router/router.ts","target":"router.ts"},{"source":"router/linear-router/router.ts","target":"utils/url.ts"},{"source":"router/pattern-router/index.ts","target":"router/pattern-router/router.ts"},{"source":"router/pattern-router/router.ts","target":"router.ts"},{"source":"router/reg-exp-router/index.ts","target":"router/reg-exp-router/router.ts"},{"source":"router/reg-exp-router/index.ts","target":"router/reg-exp-router/prepared-router.ts"},{"source":"router/reg-exp-router/matcher.ts","target":"router.ts"},{"source":"router/reg-exp-router/prepared-router.ts","target":"router.ts"},{"source":"router/reg-exp-router/prepared-router.ts","target":"router/reg-exp-router/matcher.ts"},{"source":"router/reg-exp-router/prepared-router.ts","target":"router/reg-exp-router/router.ts"},{"source":"router/reg-exp-router/router.ts","target":"router.ts"},{"source":"router/reg-exp-router/router.ts","target":"utils/url.ts"},{"source":"router/reg-exp-router/router.ts","target":"router/reg-exp-router/matcher.ts"},{"source":"router/reg-exp-router/router.ts","target":"router/reg-exp-router/node.ts"},{"source":"router/reg-exp-router/router.ts","target":"router/reg-exp-router/trie.ts"},{"source":"router/reg-exp-router/trie.ts","target":"router/reg-exp-router/node.ts"},{"source":"router/smart-router/index.ts","target":"router/smart-router/router.ts"},{"source":"router/smart-router/router.ts","target":"router.ts"},{"source":"router/trie-router/index.ts","target":"router/trie-router/router.ts"},{"source":"router/trie-router/node.ts","target":"router.ts"},{"source":"router/trie-router/node.ts","target":"utils/url.ts"},{"source":"router/trie-router/router.ts","target":"router.ts"},{"source":"router/trie-router/router.ts","target":"utils/url.ts"},{"source":"router/trie-router/router.ts","target":"router/trie-router/node.ts"},{"source":"types.ts","target":"context.ts"},{"source":"types.ts","target":"hono-base.ts"},{"source":"types.ts","target":"utils/headers.ts"},{"source":"types.ts","target":"utils/http-status.ts"},{"source":"types.ts","target":"utils/types.ts"},{"source":"utils/basic-auth.ts","target":"utils/encode.ts"},{"source":"utils/body.ts","target":"request.ts"},{"source":"utils/buffer.ts","target":"utils/crypto.ts"},{"source":"utils/cookie.ts","target":"utils/url.ts"},{"source":"utils/crypto.ts","target":"utils/types.ts"},{"source":"utils/handler.ts","target":"utils/constants.ts"},{"source":"utils/ipaddr.ts","target":"helper/conninfo/index.ts"},{"source":"utils/jwt/index.ts","target":"utils/jwt/jwt.ts"},{"source":"utils/jwt/jws.ts","target":"helper/adapter/index.ts"},{"source":"utils/jwt/jws.ts","target":"utils/encode.ts"},{"source":"utils/jwt/jws.ts","target":"utils/jwt/jwa.ts"},{"source":"utils/jwt/jws.ts","target":"utils/jwt/types.ts"},{"source":"utils/jwt/jws.ts","target":"utils/jwt/utf8.ts"},{"source":"utils/jwt/jwt.ts","target":"utils/encode.ts"},{"source":"utils/jwt/jwt.ts","target":"utils/jwt/jwa.ts"},{"source":"utils/jwt/jwt.ts","target":"utils/jwt/jws.ts"},{"source":"utils/jwt/jwt.ts","target":"utils/jwt/types.ts"},{"source":"utils/jwt/jwt.ts","target":"utils/jwt/utf8.ts"},{"source":"utils/jwt/types.ts","target":"utils/jwt/jws.ts"},{"source":"validator/index.ts","target":"validator/validator.ts"},{"source":"validator/index.ts","target":"validator/utils.ts"},{"source":"validator/utils.ts","target":"types.ts"},{"source":"validator/utils.ts","target":"utils/types.ts"},{"source":"validator/validator.ts","target":"context.ts"},{"source":"validator/validator.ts","target":"helper/cookie/index.ts"},{"source":"validator/validator.ts","target":"http-exception.ts"},{"source":"validator/validator.ts","target":"types.ts"},{"source":"validator/validator.ts","target":"utils/body.ts"},{"source":"validator/validator.ts","target":"utils/buffer.ts"},{"source":"validator/validator.ts","target":"validator/utils.ts"}];
+
+  var colorMap = {
+    core: '#4361ee', middleware: '#2ec4b6', router: '#ff9f1c', utils: '#8d99ae',
+    adapter: '#9b5de5', helper: '#f15bb5', jsx: '#00f5d4', client: '#fee440',
+    validator: '#c1121f', preset: '#c1121f', request: '#4361ee'
+  };
+  function nodeColor(d) { return colorMap[d.dir] || '#c1121f'; }
+  var container = document.getElementById('d3-container');
+  var width = container.clientWidth;
+  var height = container.clientHeight;
+  var svg = d3.select('#d3-container svg');
+  var g = svg.append('g');
+  var zoom = d3.zoom().scaleExtent([0.1, 6]).on('zoom', function(e) { g.attr('transform', e.transform); });
+  svg.call(zoom);
+  svg.append('defs').selectAll('marker').data(['arrow']).join('marker')
+    .attr('id', 'arr').attr('viewBox', '0 -5 10 10').attr('refX', 20).attr('refY', 0)
+    .attr('markerWidth', 6).attr('markerHeight', 6).attr('orient', 'auto')
+    .append('path').attr('fill', '#334').attr('d', 'M0,-5L10,0L0,5');
+  var simulation = d3.forceSimulation(graphNodes)
+    .force('link', d3.forceLink(graphLinks).id(function(d){return d.id}).distance(80))
+    .force('charge', d3.forceManyBody().strength(-120))
+    .force('center', d3.forceCenter(width/2, height/2))
+    .force('collision', d3.forceCollide().radius(16));
+  var link = g.append('g').selectAll('line').data(graphLinks).join('line')
+    .attr('stroke', '#1e2d4a').attr('stroke-width', 1).attr('marker-end', 'url(#arr)');
+  var node = g.append('g').selectAll('circle').data(graphNodes).join('circle')
+    .attr('r', function(d) {
+      var inc = graphLinks.filter(function(l){return (l.target.id||l.target)===d.id}).length;
+      return Math.max(4, Math.min(12, 3 + inc * 0.5));
+    })
+    .attr('fill', nodeColor).attr('stroke', '#0d1117').attr('stroke-width', 1.5)
+    .style('cursor', 'grab')
+    .call(d3.drag()
+      .on('start', function(e,d){if(!e.active)simulation.alphaTarget(0.3).restart();d.fx=d.x;d.fy=d.y;})
+      .on('drag', function(e,d){d.fx=e.x;d.fy=e.y;})
+      .on('end', function(e,d){if(!e.active)simulation.alphaTarget(0);d.fx=null;d.fy=null;})
+    );
+  var label = g.append('g').selectAll('text').data(graphNodes).join('text')
+    .text(function(d){return d.label.replace('.ts','')})
+    .attr('fill','#fff').attr('font-size',9).attr('dx',10).attr('dy',3)
+    .style('pointer-events','none').style('user-select','none');
+  var tooltip = d3.select('#d3-tooltip');
+  node.on('mouseover', function(e,d) {
+    tooltip.style('display','block').html('<strong>src/'+d.id+'</strong><br>dir: '+d.dir);
+    var connected = new Set([d.id]);
+    graphLinks.forEach(function(l){
+      var s=l.source.id||l.source, t=l.target.id||l.target;
+      if(s===d.id)connected.add(t); if(t===d.id)connected.add(s);
+    });
+    node.attr('opacity',function(n){return connected.has(n.id)?1:0.15});
+    label.attr('opacity',function(n){return connected.has(n.id)?1:0.08});
+    link.attr('stroke',function(l){return((l.source.id||l.source)===d.id||(l.target.id||l.target)===d.id)?'#e94560':'#1e2d4a'})
+        .attr('stroke-width',function(l){return((l.source.id||l.source)===d.id||(l.target.id||l.target)===d.id)?2:1})
+        .attr('opacity',function(l){return((l.source.id||l.source)===d.id||(l.target.id||l.target)===d.id)?1:0.1});
+  })
+  .on('mousemove',function(e){tooltip.style('left',(e.clientX+14)+'px').style('top',(e.clientY-10)+'px');})
+  .on('mouseout',function(){
+    tooltip.style('display','none');
+    node.attr('opacity',1);label.attr('opacity',1);
+    link.attr('stroke','#1e2d4a').attr('stroke-width',1).attr('opacity',1);
+  });
+  simulation.on('tick',function(){
+    link.attr('x1',function(d){return d.source.x}).attr('y1',function(d){return d.source.y})
+        .attr('x2',function(d){return d.target.x}).attr('y2',function(d){return d.target.y});
+    node.attr('cx',function(d){return d.x}).attr('cy',function(d){return d.y});
+    label.attr('x',function(d){return d.x}).attr('y',function(d){return d.y});
+  });
+  d3.select('#d3-search').on('input',function(){
+    var q=this.value.toLowerCase().trim();
+    if(!q){node.attr('opacity',1).attr('stroke','#0d1117').attr('stroke-width',1.5);
+      label.attr('opacity',1).attr('fill','#fff');link.attr('opacity',1);return;}
+    var matches=new Set(graphNodes.filter(function(n){return n.id.toLowerCase().includes(q)}).map(function(n){return n.id}));
+    node.attr('opacity',function(n){return matches.has(n.id)?1:0.1})
+        .attr('stroke',function(n){return matches.has(n.id)?'#e94560':'#0d1117'})
+        .attr('stroke-width',function(n){return matches.has(n.id)?3:1.5});
+    label.attr('opacity',function(n){return matches.has(n.id)?1:0.06})
+         .attr('fill',function(n){return matches.has(n.id)?'#e94560':'#fff'});
+    link.attr('opacity',function(l){
+      var s=l.source.id||l.source,t=l.target.id||l.target;
+      return(matches.has(s)||matches.has(t))?0.8:0.05;
+    });
+  });
+  setTimeout(function(){svg.transition().duration(800).call(
+    zoom.transform,d3.zoomIdentity.translate(width*0.1,height*0.1).scale(0.85)
+  )},1500);
+})();
+</script>
+</body>
+</html>

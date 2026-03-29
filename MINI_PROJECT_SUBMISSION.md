@@ -72,6 +72,8 @@ The deepest call chain I actually traced in this session was within `compose.ts`
 
 ## Module Visualization
 
+Live interactive version: https://datariusai.github.io/codebase-detective-hono
+
 Interactive version: [docs/visualization/dependency-graph.html](docs/visualization/dependency-graph.html)
 Open locally in browser. Static version below:
 
