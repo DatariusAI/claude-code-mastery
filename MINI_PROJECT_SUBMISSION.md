@@ -1,8 +1,8 @@
 # Mini Project — The Codebase Detective
 
-## Learner Name: [Your Name]
+## Learner Name: Mohammad Alrashed
 ## Repository Studied: honojs/hono
-## GitHub Submission Repo: [https://github.com/DatariusAI/codebase-detective-hono]
+## GitHub Submission Repo: https://github.com/DatariusAI/codebase-detective-hono
 
 ---
 
