@@ -59,3 +59,75 @@ The deepest call chain I actually traced in this session was within `compose.ts`
 **Correct but not useful:** My first Explore agent run for the dependency graph returned a detailed 851-line summary of import patterns, directory distributions, and architectural insights — but it failed to save the actual data file to disk. The analysis was accurate (184 nodes, layered architecture, no circular deps) but I couldn't use any of it programmatically; I had to redo the entire import extraction with a Node.js script myself. The lesson: a correct answer in the wrong format is wasted work.
 
 **Wrong but instructive:** I cannot point to a factual error I made in this session that I later caught, but the closest case is structural: my first four attempts to run the graph-building Node.js script failed due to environment issues (Python not installed, `.js` treated as ESM due to a parent `package.json`, Windows path for `/tmp/`, backslash escaping in `-e` inline scripts). Each failure was a wrong assumption about the runtime environment, and each was instructive — they taught me that this machine requires `.cjs` extensions, uses `AppData/Local/Temp` not `/tmp/`, and has Node.js v25.8.1 with ESM-by-default behavior.
+
+---
+
+## Diagrams
+
+- [Architecture — System Layers](docs/diagrams/architecture.md) — Mermaid flowchart of Hono's layered module architecture
+- [Request Lifecycle — Sequence Diagram](docs/diagrams/request-sequence.md) — Step-by-step GET request flow from client through adapter, router, middleware, handler, and back
+- [Context State Diagram](docs/diagrams/state-diagram.md) — State transitions of the Context object during request processing
+
+---
+
+## Module Visualization
+
+Interactive version: [docs/visualization/dependency-graph.html](docs/visualization/dependency-graph.html)
+Open locally in browser. Static version below:
+
+```mermaid
+flowchart TB
+    utils["utils<br/>26 files"]
+    router["router<br/>15 files"]
+    core["core<br/>9 files<br/>(types, context, request,<br/>compose, hono-base, hono)"]
+    helper["helper<br/>25 files"]
+    middleware["middleware<br/>34 files"]
+    adapter["adapter<br/>37 files"]
+    jsx["jsx<br/>27 files"]
+    client["client<br/>5 files"]
+    preset["preset<br/>2 files"]
+    validator["validator<br/>3 files"]
+
+    core -->|15| utils
+    core -->|3| router
+    router -->|8| core
+    router -->|4| utils
+
+    helper -->|27| core
+    helper -->|18| utils
+    helper -->|3| client
+
+    middleware -->|53| core
+    middleware -->|26| utils
+    middleware -->|5| helper
+
+    adapter -->|21| core
+    adapter -->|13| helper
+    adapter -->|3| middleware
+    adapter -->|2| utils
+
+    client -->|6| core
+    client -->|5| utils
+
+    jsx -->|10| utils
+    jsx -->|7| helper
+
+    preset -->|4| core
+    preset -->|4| router
+
+    validator -->|4| core
+    validator -->|3| utils
+
+    style utils fill:#8d99ae,color:#fff,stroke:#8d99ae
+    style router fill:#ff9f1c,color:#fff,stroke:#ff9f1c
+    style core fill:#4361ee,color:#fff,stroke:#4361ee
+    style helper fill:#f15bb5,color:#fff,stroke:#f15bb5
+    style middleware fill:#2ec4b6,color:#fff,stroke:#2ec4b6
+    style adapter fill:#9b5de5,color:#fff,stroke:#9b5de5
+    style jsx fill:#00f5d4,color:#000,stroke:#00f5d4
+    style client fill:#fee440,color:#000,stroke:#fee440
+    style preset fill:#c1121f,color:#fff,stroke:#c1121f
+    style validator fill:#c1121f,color:#fff,stroke:#c1121f
+```
+
+**Key insight:** `middleware/ → core/` is the heaviest edge (53 imports). `context.ts` is the single most-imported file (~58 importers). `jsx/` is nearly isolated — only depends on `utils/` and `helper/`.
