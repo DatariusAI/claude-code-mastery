@@ -2,7 +2,7 @@
 
 ## Learner Name: [Your Name]
 ## Repository Studied: honojs/hono
-## GitHub Submission Repo: [https://github.com/YOUR_USERNAME/codebase-detective-hono]
+## GitHub Submission Repo: [https://github.com/DatariusAI/codebase-detective-hono]
 
 ---
 
