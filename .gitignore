@@ -4,3 +4,4 @@ dist/
 .env.*
 .claude/
 *.log
+docs/exploration-log.md
