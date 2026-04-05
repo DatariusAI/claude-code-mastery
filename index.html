@@ -483,25 +483,25 @@ stateDiagram-v2
 
       <div class="session-card">
         <div class="session-num">Session 3</div>
-        <h3>Prompt Engineering Fundamentals</h3>
-        <p class="session-date">5 April 2025</p>
+        <h3>Advanced Prompt Engineering</h3>
+        <p class="session-date">4&ndash;7 April 2026</p>
         <ul>
-          <li>Anatomy of effective prompts</li>
-          <li>Context management and token optimization</li>
-          <li>Chain-of-thought prompting strategies</li>
-          <li>Iterative refinement techniques</li>
+          <li>YAML prompt libraries with role, task, and output_schema</li>
+          <li>Role-based prompting: spec-writer, architect, reviewer, test-generator</li>
+          <li>Output schema enforcement via JSON Schema</li>
+          <li>Self-critique loops: generate &rarr; review &rarr; fix cycles</li>
         </ul>
       </div>
 
       <div class="session-card">
         <div class="session-num">Session 4</div>
         <h3>Spec-Driven Development</h3>
-        <p class="session-date">11 April 2025</p>
+        <p class="session-date">7&ndash;11 April 2026</p>
         <ul>
-          <li>Writing PRDs for AI-assisted development</li>
-          <li>API specification design</li>
-          <li>Test-first development with Claude Code</li>
-          <li>From specification to implementation</li>
+          <li>Formal specs with SHALL/MUST normative language (RFC 2119)</li>
+          <li>Gherkin scenarios: happy path, error cases, edge cases</li>
+          <li>OpenAPI contracts with endpoint definitions</li>
+          <li>Traceability matrices: requirement &rarr; code &rarr; test</li>
         </ul>
       </div>
     </div>
@@ -509,49 +509,49 @@ stateDiagram-v2
 
   <div class="sub-panel" data-subpanel="w2-project">
     <div class="feature-factory-header">
-      <h1>Spec-Driven Feature Factory: URL Shortener</h1>
-      <p>Build a complete URL shortener from specification to deployment using Claude Code</p>
+      <h1>The Spec-Driven Feature Factory</h1>
+      <p>URL Shortener built spec-first with full requirement traceability</p>
     </div>
 
     <div class="parts-grid">
       <div class="part-card">
         <div class="part-num">Part 1</div>
-        <h3>Design &amp; Specification</h3>
+        <h3>YAML Prompt Library</h3>
         <ul>
-          <li>Write a Product Requirements Document (PRD)</li>
-          <li>Define API specification (OpenAPI/Swagger)</li>
-          <li>Create a comprehensive test plan</li>
-          <li>Design data models and schemas</li>
+          <li>4 structured YAML prompt templates</li>
+          <li>spec-writer, architect, code-reviewer, test-generator</li>
+          <li>Each with role, task, output_schema, and tags</li>
+          <li>Template variables for reusability</li>
         </ul>
       </div>
       <div class="part-card">
         <div class="part-num">Part 2</div>
-        <h3>Implementation</h3>
+        <h3>Spec &amp; Diagrams</h3>
         <ul>
-          <li>Build URL shortener with Claude Code from spec</li>
-          <li>Implement REST API endpoints</li>
-          <li>Add URL validation and sanitization</li>
-          <li>Set up database and storage layer</li>
+          <li>Formal spec: 7 FRs, 5 NFRs, 10 Gherkin scenarios</li>
+          <li>OpenAPI 3.0 contract with all endpoints</li>
+          <li>Mermaid diagrams: sequence, ER, state</li>
+          <li>SHALL/MUST normative language (RFC 2119)</li>
         </ul>
       </div>
       <div class="part-card">
         <div class="part-num">Part 3</div>
-        <h3>Testing &amp; Validation</h3>
+        <h3>Implementation &amp; Self-Critique</h3>
         <ul>
-          <li>Automated test suite (unit + integration)</li>
-          <li>Edge case coverage</li>
-          <li>Performance and load testing</li>
-          <li>Security validation</li>
+          <li>Hono + TypeScript with REQ-ID traceability</li>
+          <li>In-memory store, URL validator, short code generator</li>
+          <li>2-cycle self-critique loop (security: 6&rarr;9/10)</li>
+          <li>JSON schema-enforced output from Claude</li>
         </ul>
       </div>
       <div class="part-card">
         <div class="part-num">Part 4</div>
-        <h3>Documentation &amp; Reflection</h3>
+        <h3>Tests &amp; Traceability</h3>
         <ul>
-          <li>12 reflection questions on the process</li>
-          <li>Prompt engineering lessons learned</li>
-          <li>Spec vs. implementation gap analysis</li>
-          <li>Best practices documentation</li>
+          <li>23 vitest tests across 5 test files (100% pass)</li>
+          <li>Traceability matrix: REQ &rarr; code &rarr; test</li>
+          <li>12-question reflection report with real data</li>
+          <li>Security scan: zero secrets in source</li>
         </ul>
       </div>
     </div>
@@ -559,17 +559,19 @@ stateDiagram-v2
     <div class="deliverables-section">
       <h2><span>Deliverables</span> Checklist</h2>
       <ul class="checklist">
-        <li><span class="check-icon">&#10003;</span> Product Requirements Document (PRD)</li>
-        <li><span class="check-icon">&#10003;</span> API Specification (OpenAPI/Swagger)</li>
-        <li><span class="check-icon">&#10003;</span> Working URL Shortener Application</li>
-        <li><span class="check-icon">&#10003;</span> Automated Test Suite</li>
-        <li><span class="check-icon">&#10003;</span> Reflection Document (12 Questions)</li>
-        <li><span class="check-icon">&#10003;</span> GitHub Repository with Clean History</li>
+        <li><span class="check-icon">&#10003;</span> prompts/ &mdash; 4 YAML prompt templates</li>
+        <li><span class="check-icon">&#10003;</span> specs/url-shortener.yaml &mdash; full formal specification</li>
+        <li><span class="check-icon">&#10003;</span> specs/diagrams/ &mdash; 3 Mermaid diagrams</li>
+        <li><span class="check-icon">&#10003;</span> src/ &mdash; Hono/TypeScript implementation with REQ-ID comments</li>
+        <li><span class="check-icon">&#10003;</span> tests/ &mdash; auto-generated vitest suite (23 tests)</li>
+        <li><span class="check-icon">&#10003;</span> docs/traceability-matrix.md &mdash; requirement &rarr; code &rarr; test mapping</li>
+        <li><span class="check-icon">&#10003;</span> docs/self-critique-log.md &mdash; generate &rarr; review &rarr; fix cycles</li>
+        <li><span class="check-icon">&#10003;</span> REPORT.md &mdash; answers to all 12 questions</li>
       </ul>
     </div>
 
     <div class="repo-link-section">
-      <a href="https://github.com/DatariusAI/url-shortener" target="_blank">View Repository &rarr; github.com/DatariusAI/url-shortener</a>
+      <p>Repository link will appear upon submission</p>
     </div>
   </div>
 </div><!-- end week 2 panel -->

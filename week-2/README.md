@@ -1,31 +1,49 @@
-# Week 2 — Prompt Engineering & Spec-Driven Development
+# Week 2 — The Spec-Driven Feature Factory
 
-**Status:** IN PROGRESS
+A URL shortener service built entirely spec-first using structured YAML prompt templates, formal requirements (SHALL/MUST per RFC 2119), Gherkin scenarios, and full requirement traceability. Every line of implementation code references a REQ-ID, every test traces to a scenario, and a self-critique loop verified security and correctness before submission.
 
-## Mini Project: Spec-Driven Feature Factory (URL Shortener)
+## Tech Stack
 
-Build a URL shortener using spec-driven development with Claude Code.
+Hono · TypeScript · Node.js · Vitest
 
-### Structure
+## Folder Structure
 
 ```
 week-2/
-├── prompts/          # YAML prompt templates (spec-writer, architect, reviewer, test-gen)
-├── specs/            # Generated formal specifications
-│   └── diagrams/     # Architecture and flow diagrams
-├── src/              # Implementation source code
-├── tests/            # Auto-generated test suites
-├── docs/             # Week 2 documentation and reflections
-└── README.md
+├── prompts/                        # YAML prompt library (4 templates)
+│   ├── spec-writer.yaml            # Generates formal specs from feature requests
+│   ├── architect.yaml              # Generates implementation plans from specs
+│   ├── code-reviewer.yaml          # Security-focused code review with OWASP scoring
+│   └── test-generator.yaml         # Generates test suites from specs
+├── specs/                          # Generated specifications
+│   ├── url-shortener.yaml          # Formal spec: 7 FRs, 5 NFRs, 10 scenarios, OpenAPI
+│   └── diagrams/                   # Mermaid diagrams (sequence, ER, state)
+├── src/                            # Hono/TypeScript implementation
+│   └── src/                        # Source files with REQ-ID traceability comments
+├── tests/                          # Auto-generated vitest suite (23 tests)
+├── docs/                           # Documentation and artifacts
+│   ├── architect-plan.md
+│   ├── self-critique-log.md
+│   ├── traceability-matrix.md
+│   ├── test-results.txt
+│   ├── schema-shortener.json
+│   └── schema-validated-output.md
+├── REPORT.md                       # 12-question reflection report
+└── README.md                       # This file
 ```
 
-### Parts
+## Setup
 
-1. **Design & Specification** — PRD, API spec, test plan via YAML prompts
-2. **Implementation** — Build URL shortener from spec using Claude Code
-3. **Testing & Validation** — Automated test suite, edge cases
-4. **Documentation & Reflection** — 12 reflection questions
+```bash
+cd week-2/src
+npm install
+npm test
+```
 
-### Repo
+## Report
 
-- URL Shortener: https://github.com/DatariusAI/url-shortener
+See [REPORT.md](./REPORT.md) for the full 12-question reflection report with real data, REQ-IDs, and code samples.
+
+---
+
+Part of the [DatariusAI/claude-code-mastery](https://github.com/DatariusAI/claude-code-mastery) 7-week AI engineering portfolio.

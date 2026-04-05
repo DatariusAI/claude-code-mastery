@@ -1,0 +1,270 @@
+meta:
+  title: "URL Shortener Service"
+  version: "1.0.0"
+  req_prefix: "REQ-SHORT"
+  created: "2026-04-05"
+
+functional_requirements:
+  - id: REQ-SHORT-001
+    description: "Shorten a valid long URL into a unique short code"
+    shall: "The system SHALL accept a valid URL via POST /shorten and return a unique short code of 6-8 alphanumeric characters."
+    must: "The response MUST include the full short URL, the original URL, the short code, creation timestamp, and expiration date if provided."
+    acceptance_criteria:
+      - "POST /shorten with a valid URL returns HTTP 201 with JSON body containing shortUrl, originalUrl, shortCode, createdAt"
+      - "Short codes MUST be 6-8 alphanumeric characters [a-zA-Z0-9]"
+      - "Each invocation with a unique URL MUST produce a unique short code"
+      - "Response time MUST be under 200ms at p99"
+
+  - id: REQ-SHORT-002
+    description: "Redirect short URL to original long URL"
+    shall: "The system SHALL redirect GET /:code requests to the original URL with HTTP 301 (Moved Permanently)."
+    must: "The redirect MUST set the Location header to the original URL. The system MUST return HTTP 404 if the short code does not exist."
+    acceptance_criteria:
+      - "GET /:code with a valid, active short code returns HTTP 301 with Location header set to the original URL"
+      - "GET /:code with a non-existent short code returns HTTP 404 with JSON error body"
+      - "The redirect MUST NOT expose internal data in the response body"
+
+  - id: REQ-SHORT-003
+    description: "Track analytics events per short URL"
+    shall: "The system SHALL record an analytics event on every successful redirect, capturing timestamp, referrer header, and hashed IP address."
+    must: "GET /analytics/:code MUST return the total click count, last accessed timestamp, and list of recent referrers."
+    acceptance_criteria:
+      - "Every successful redirect (HTTP 301) creates an analytics event record"
+      - "GET /analytics/:code returns JSON with clickCount, lastAccessedAt, and referrers array"
+      - "GET /analytics/:code for a non-existent code returns HTTP 404"
+      - "IP addresses MUST be stored as SHA-256 hashes, never in plain text"
+
+  - id: REQ-SHORT-004
+    description: "Support optional URL expiration"
+    shall: "The system SHALL accept an optional expiresAt field in the POST /shorten request body."
+    must: "Accessing an expired URL via GET /:code MUST return HTTP 410 (Gone) with a JSON error body. Expired URLs MUST NOT redirect."
+    acceptance_criteria:
+      - "POST /shorten with expiresAt stores the expiration timestamp"
+      - "GET /:code after expiresAt has passed returns HTTP 410 with error message"
+      - "GET /analytics/:code for an expired URL MUST still return analytics data"
+      - "expiresAt MUST be a valid ISO 8601 datetime string in the future"
+
+  - id: REQ-SHORT-005
+    description: "Validate input URLs and reject invalid or malicious submissions"
+    shall: "The system SHALL validate that the submitted URL has a valid format with http:// or https:// scheme."
+    must: "The system MUST reject URLs exceeding 2048 characters, URLs with invalid schemes, empty URLs, and URLs matching a configurable blocklist of known malicious domains. The system MUST return HTTP 409 if the same original URL has already been shortened."
+    acceptance_criteria:
+      - "POST /shorten with an invalid URL returns HTTP 400 with descriptive error"
+      - "POST /shorten with a URL exceeding 2048 characters returns HTTP 400"
+      - "POST /shorten with a blocklisted domain returns HTTP 403"
+      - "POST /shorten with a previously shortened URL returns HTTP 409 with the existing short URL"
+      - "Only http:// and https:// schemes are accepted"
+
+  - id: REQ-SHORT-006
+    description: "Delete a short URL"
+    shall: "The system SHALL support deletion of short URLs via DELETE /:code."
+    must: "DELETE /:code MUST mark the URL as inactive and return HTTP 204. Subsequent GET /:code requests to a deleted URL MUST return HTTP 410. DELETE on a non-existent code MUST return HTTP 404."
+    acceptance_criteria:
+      - "DELETE /:code with a valid code returns HTTP 204 No Content"
+      - "GET /:code after deletion returns HTTP 410"
+      - "DELETE /:code with a non-existent code returns HTTP 404"
+      - "Analytics data MUST be preserved after deletion"
+
+  - id: REQ-SHORT-007
+    description: "Consistent error response shape across all endpoints"
+    shall: "The system SHALL return all error responses in a consistent JSON format."
+    must: "Every error response MUST include: { error: { code: <HTTP_STATUS>, message: <string>, details: <string|null> } }"
+    acceptance_criteria:
+      - "All 4xx and 5xx responses use the same JSON error envelope"
+      - "The error object MUST contain code (number), message (string), and details (string or null)"
+      - "Content-Type header MUST be application/json on all error responses"
+
+non_functional_requirements:
+  - id: NFR-001
+    category: performance
+    requirement: "API response time MUST be under 200ms at p99 for all endpoints under normal load."
+    metric: "p99 latency < 200ms measured over 1-minute windows"
+
+  - id: NFR-002
+    category: rate_limiting
+    requirement: "The API MUST enforce a rate limit of 60 requests per minute per IP address."
+    metric: "Requests exceeding 60/min per IP receive HTTP 429 with Retry-After header"
+
+  - id: NFR-003
+    category: security
+    requirement: "All API traffic MUST be served over HTTPS only. IP addresses MUST be stored as SHA-256 hashes."
+    metric: "Zero plain-text IPs in storage; HTTP requests receive 301 to HTTPS equivalent"
+
+  - id: NFR-004
+    category: input_limits
+    requirement: "Original URLs MUST NOT exceed 2048 characters. Short codes MUST be 6-8 alphanumeric characters."
+    metric: "URLs > 2048 chars rejected with HTTP 400; short codes match regex [a-zA-Z0-9]{6,8}"
+
+  - id: NFR-005
+    category: availability
+    requirement: "The service MUST handle graceful degradation and return structured errors on internal failures."
+    metric: "All uncaught exceptions return HTTP 500 with the standard error envelope; no stack traces in production responses"
+
+api_contract:
+  openapi: "3.0.3"
+  info:
+    title: "URL Shortener API"
+    version: "1.0.0"
+    description: "RESTful API for URL shortening, redirection, analytics, and management."
+  paths:
+    /shorten:
+      post:
+        summary: "Create a shortened URL"
+        operationId: "createShortUrl"
+        requestBody:
+          required: true
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [url]
+                properties:
+                  url: { type: string, maxLength: 2048 }
+                  expiresAt: { type: string, format: date-time, nullable: true }
+        responses:
+          "201":
+            description: "Short URL created successfully"
+            content:
+              application/json:
+                schema:
+                  type: object
+                  required: [shortUrl, originalUrl, shortCode, createdAt]
+                  properties:
+                    shortUrl: { type: string }
+                    originalUrl: { type: string }
+                    shortCode: { type: string }
+                    createdAt: { type: string, format: date-time }
+                    expiresAt: { type: string, format: date-time, nullable: true }
+          "400": { description: "Invalid URL format or exceeds max length" }
+          "403": { description: "URL domain is blocklisted" }
+          "409": { description: "URL already shortened — returns existing short URL" }
+          "429": { description: "Rate limit exceeded" }
+    /{code}:
+      get:
+        summary: "Redirect to original URL"
+        operationId: "redirectToOriginal"
+        parameters:
+          - name: code
+            in: path
+            required: true
+            schema: { type: string, pattern: "^[a-zA-Z0-9]{6,8}$" }
+        responses:
+          "301": { description: "Redirect to original URL via Location header" }
+          "404": { description: "Short code not found" }
+          "410": { description: "URL has expired or been deleted" }
+      delete:
+        summary: "Delete a short URL"
+        operationId: "deleteShortUrl"
+        parameters:
+          - name: code
+            in: path
+            required: true
+            schema: { type: string, pattern: "^[a-zA-Z0-9]{6,8}$" }
+        responses:
+          "204": { description: "URL deleted successfully" }
+          "404": { description: "Short code not found" }
+    /analytics/{code}:
+      get:
+        summary: "Get analytics for a short URL"
+        operationId: "getAnalytics"
+        parameters:
+          - name: code
+            in: path
+            required: true
+            schema: { type: string, pattern: "^[a-zA-Z0-9]{6,8}$" }
+        responses:
+          "200":
+            description: "Analytics data"
+            content:
+              application/json:
+                schema:
+                  type: object
+                  required: [shortCode, originalUrl, clickCount, lastAccessedAt, referrers]
+                  properties:
+                    shortCode: { type: string }
+                    originalUrl: { type: string }
+                    clickCount: { type: integer }
+                    lastAccessedAt: { type: string, format: date-time, nullable: true }
+                    referrers: { type: array, items: { type: string } }
+          "404": { description: "Short code not found" }
+
+scenarios:
+  - id: SCEN-001
+    title: "Successfully shorten a valid URL"
+    type: happy_path
+    req_ids: [REQ-SHORT-001]
+    given: "A valid URL https://example.com/very/long/path that has not been shortened before"
+    when: "POST /shorten is called with { url: 'https://example.com/very/long/path' }"
+    then: "HTTP 201 is returned with a JSON body containing shortUrl, originalUrl, shortCode (6-8 alphanum chars), and createdAt"
+
+  - id: SCEN-002
+    title: "Redirect via short code to original URL"
+    type: happy_path
+    req_ids: [REQ-SHORT-002, REQ-SHORT-003]
+    given: "A short code 'abc123' exists mapping to https://example.com/page and is not expired"
+    when: "GET /abc123 is called"
+    then: "HTTP 301 is returned with Location: https://example.com/page and an analytics event is recorded with timestamp, referrer, and hashed IP"
+
+  - id: SCEN-003
+    title: "Retrieve analytics for a short URL"
+    type: happy_path
+    req_ids: [REQ-SHORT-003]
+    given: "Short code 'abc123' exists and has been accessed 5 times"
+    when: "GET /analytics/abc123 is called"
+    then: "HTTP 200 is returned with JSON containing clickCount: 5, lastAccessedAt, and referrers array"
+
+  - id: SCEN-004
+    title: "Reject an invalid URL"
+    type: error_case
+    req_ids: [REQ-SHORT-005, REQ-SHORT-007]
+    given: "No prior state"
+    when: "POST /shorten is called with { url: 'not-a-valid-url' }"
+    then: "HTTP 400 is returned with { error: { code: 400, message: 'Invalid URL format', details: 'URL must start with http:// or https://' } }"
+
+  - id: SCEN-005
+    title: "Reject a duplicate URL submission"
+    type: error_case
+    req_ids: [REQ-SHORT-005, REQ-SHORT-007]
+    given: "https://example.com/page has already been shortened to code 'abc123'"
+    when: "POST /shorten is called with { url: 'https://example.com/page' }"
+    then: "HTTP 409 is returned with the existing short URL in the response body"
+
+  - id: SCEN-006
+    title: "Access an expired URL"
+    type: edge_case
+    req_ids: [REQ-SHORT-004, REQ-SHORT-007]
+    given: "Short code 'exp456' exists with expiresAt set to a past timestamp"
+    when: "GET /exp456 is called"
+    then: "HTTP 410 is returned with { error: { code: 410, message: 'URL has expired', details: null } } and no redirect occurs"
+
+  - id: SCEN-007
+    title: "Delete a short URL and verify it is gone"
+    type: happy_path
+    req_ids: [REQ-SHORT-006]
+    given: "Short code 'del789' exists and is active"
+    when: "DELETE /del789 is called, then GET /del789 is called"
+    then: "DELETE returns HTTP 204. Subsequent GET returns HTTP 410."
+
+  - id: SCEN-008
+    title: "Access a non-existent short code"
+    type: error_case
+    req_ids: [REQ-SHORT-002, REQ-SHORT-007]
+    given: "No short code 'zzz999' exists in the system"
+    when: "GET /zzz999 is called"
+    then: "HTTP 404 is returned with { error: { code: 404, message: 'Short code not found', details: null } }"
+
+  - id: SCEN-009
+    title: "Reject a URL exceeding maximum length"
+    type: edge_case
+    req_ids: [REQ-SHORT-005, NFR-004]
+    given: "No prior state"
+    when: "POST /shorten is called with a URL that is 2049 characters long"
+    then: "HTTP 400 is returned with error message indicating URL exceeds maximum length of 2048 characters"
+
+  - id: SCEN-010
+    title: "Rate limit exceeded"
+    type: edge_case
+    req_ids: [NFR-002, REQ-SHORT-007]
+    given: "A client IP has made 60 requests in the current minute"
+    when: "The 61st request is made within the same minute"
+    then: "HTTP 429 is returned with Retry-After header and standard error envelope"

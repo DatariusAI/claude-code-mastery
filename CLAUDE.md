@@ -7,7 +7,7 @@ Central portfolio for the Analytics Vidhya "Claude Code Mastery: AI-Augmented So
 ## Current State
 
 - **Week 1: COMPLETE** — Hono codebase analysis, D3.js dependency graph, 12-question reflections report, GitHub Pages live at https://datariusai.github.io/claude-code-mastery/
-- **Week 2: IN PROGRESS** — Spec-Driven URL Shortener (YAML prompts, formal spec, implementation, auto-generated tests)
+- **Week 2: COMPLETE** — Spec-Driven Feature Factory: 4 YAML prompt templates, formal spec (7 FRs, 5 NFRs, 10 scenarios), Hono/TypeScript URL shortener with REQ-ID traceability, 23 vitest tests (100% pass), self-critique loop, traceability matrix, 12-question report
 - **Weeks 3–7: UPCOMING**
 
 ## How This Repo Is Organized

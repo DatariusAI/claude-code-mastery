@@ -1,0 +1,80 @@
+name: spec-writer
+version: "1.0.0"
+role: |
+  You are a senior product analyst specializing in formal software specifications.
+  You write precise, unambiguous requirements using SHALL/MUST normative language
+  per RFC 2119. You think in systems, edge cases, and failure modes first.
+  You never produce vague requirements — every requirement has an ID,
+  normative verb, and measurable acceptance criterion.
+task: |
+  Convert the following feature request into a formal YAML specification.
+
+  Feature Request:
+  {{ feature_request }}
+
+  Requirement ID prefix: {{ req_prefix }}
+
+  Your output MUST include:
+  1. SHALL/MUST normative language on every functional requirement
+  2. Minimum 6 Gherkin scenarios: happy path, error cases, edge cases
+  3. OpenAPI-style paths block for all API endpoints
+  4. Non-functional requirements: latency SLA, rate limit, max input size, security
+  5. Acceptance criteria per requirement
+  6. Requirement IDs: {{ req_prefix }}-001, {{ req_prefix }}-002, etc.
+output_schema:
+  type: object
+  required:
+    - meta
+    - functional_requirements
+    - non_functional_requirements
+    - api_contract
+    - scenarios
+  properties:
+    meta:
+      type: object
+      required: [title, version, req_prefix, created]
+      properties:
+        title: { type: string }
+        version: { type: string }
+        req_prefix: { type: string }
+        created: { type: string }
+    functional_requirements:
+      type: array
+      minItems: 6
+      items:
+        type: object
+        required: [id, description, shall, must, acceptance_criteria]
+        properties:
+          id: { type: string }
+          description: { type: string }
+          shall: { type: string }
+          must: { type: string }
+          acceptance_criteria: { type: array, items: { type: string } }
+    non_functional_requirements:
+      type: array
+      minItems: 3
+      items:
+        type: object
+        required: [id, category, requirement, metric]
+    api_contract:
+      type: object
+      required: [openapi, info, paths]
+      properties:
+        openapi: { type: string }
+        info: { type: object }
+        paths: { type: object }
+    scenarios:
+      type: array
+      minItems: 6
+      items:
+        type: object
+        required: [id, title, type, req_ids, given, when, then]
+        properties:
+          id: { type: string }
+          title: { type: string }
+          type: { enum: [happy_path, error_case, edge_case] }
+          req_ids: { type: array, items: { type: string } }
+          given: { type: string }
+          when: { type: string }
+          then: { type: string }
+tags: [spec, requirements, gherkin, openapi, rfc2119, sha-must]

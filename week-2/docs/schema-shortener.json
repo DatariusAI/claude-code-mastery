@@ -1,0 +1,22 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "required": ["function_name", "req_ids", "typescript_code", "error_cases"],
+  "properties": {
+    "function_name": { "type": "string" },
+    "req_ids": { "type": "array", "items": { "type": "string" } },
+    "typescript_code": { "type": "string" },
+    "error_cases": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["condition", "error_code", "http_status"],
+        "properties": {
+          "condition": { "type": "string" },
+          "error_code": { "type": "string" },
+          "http_status": { "type": "number" }
+        }
+      }
+    }
+  }
+}

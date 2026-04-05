@@ -1,0 +1,32 @@
+
+[1m[46m RUN [49m[22m [36mv3.2.4 [39m[90mC:/Users/kewlf/AppData/Local/Temp/claude-code-mastery-edit/week-2/src[39m
+
+ [32m✓[39m ../tests/validator.test.ts[2m > [22mvalidateUrl[2m > [22mshould accept a valid https URL[32m 1[2mms[22m[39m
+ [32m✓[39m ../tests/validator.test.ts[2m > [22mvalidateUrl[2m > [22mshould accept a valid http URL[32m 0[2mms[22m[39m
+ [32m✓[39m ../tests/validator.test.ts[2m > [22mvalidateUrl[2m > [22mshould reject a URL without protocol[32m 0[2mms[22m[39m
+ [32m✓[39m ../tests/validator.test.ts[2m > [22mvalidateUrl[2m > [22mshould reject an empty string[32m 0[2mms[22m[39m
+ [32m✓[39m ../tests/validator.test.ts[2m > [22mvalidateUrl[2m > [22mshould reject a blocked domain[32m 0[2mms[22m[39m
+ [32m✓[39m ../tests/validator.test.ts[2m > [22mvalidateUrl[2m > [22mshould reject a URL exceeding 2048 characters[32m 1[2mms[22m[39m
+ [32m✓[39m ../tests/validator.test.ts[2m > [22mvalidateUrl[2m > [22mshould reject ftp:// scheme[32m 0[2mms[22m[39m
+ [32m✓[39m ../tests/expiry.test.ts[2m > [22mURL Expiry[2m > [22mshould redirect indefinitely when no expiresAt is set[32m 8[2mms[22m[39m
+ [32m✓[39m ../tests/expiry.test.ts[2m > [22mURL Expiry[2m > [22mshould redirect when expiresAt is in the future[32m 1[2mms[22m[39m
+ [32m✓[39m ../tests/expiry.test.ts[2m > [22mURL Expiry[2m > [22mshould return 410 for an expired URL[32m 1[2mms[22m[39m
+ [32m✓[39m ../tests/expiry.test.ts[2m > [22mURL Expiry[2m > [22mshould not record analytics for expired URL access[32m 1[2mms[22m[39m
+ [32m✓[39m ../tests/redirect.test.ts[2m > [22mGET /:code[2m > [22mshould return 301 redirect for a valid active code[32m 8[2mms[22m[39m
+ [32m✓[39m ../tests/redirect.test.ts[2m > [22mGET /:code[2m > [22mshould return 404 for a non-existent code[32m 0[2mms[22m[39m
+ [32m✓[39m ../tests/redirect.test.ts[2m > [22mGET /:code[2m > [22mshould return 410 for an expired URL[32m 1[2mms[22m[39m
+ [32m✓[39m ../tests/redirect.test.ts[2m > [22mGET /:code[2m > [22mshould increment click count on successive redirects[32m 2[2mms[22m[39m
+ [32m✓[39m ../tests/analytics.test.ts[2m > [22mGET /analytics/:code[2m > [22mshould return analytics with clickCount, lastAccessedAt, referrers[32m 10[2mms[22m[39m
+ [32m✓[39m ../tests/analytics.test.ts[2m > [22mGET /analytics/:code[2m > [22mshould return clickCount = 3 after 3 redirects[32m 2[2mms[22m[39m
+ [32m✓[39m ../tests/analytics.test.ts[2m > [22mGET /analytics/:code[2m > [22mshould return 404 for analytics of non-existent code[32m 1[2mms[22m[39m
+ [32m✓[39m ../tests/shorten.test.ts[2m > [22mPOST /shorten[2m > [22mshould return 201 with shortUrl for a valid URL[32m 9[2mms[22m[39m
+ [32m✓[39m ../tests/shorten.test.ts[2m > [22mPOST /shorten[2m > [22mshould accept and return expiresAt when provided[32m 2[2mms[22m[39m
+ [32m✓[39m ../tests/shorten.test.ts[2m > [22mPOST /shorten[2m > [22mshould return 409 for a duplicate URL[32m 2[2mms[22m[39m
+ [32m✓[39m ../tests/shorten.test.ts[2m > [22mPOST /shorten[2m > [22mshould return 400 for a URL without protocol[32m 1[2mms[22m[39m
+ [32m✓[39m ../tests/shorten.test.ts[2m > [22mPOST /shorten[2m > [22mshould return 403 for a blocked domain[32m 1[2mms[22m[39m
+
+[2m Test Files [22m [1m[32m5 passed[39m[22m[90m (5)[39m
+[2m      Tests [22m [1m[32m23 passed[39m[22m[90m (23)[39m
+[2m   Start at [22m 18:02:31
+[2m   Duration [22m 678ms[2m (transform 194ms, setup 0ms, collect 634ms, tests 56ms, environment 1ms, prepare 774ms)[22m
+
