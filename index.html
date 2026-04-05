@@ -508,71 +508,227 @@ stateDiagram-v2
   </div>
 
   <div class="sub-panel" data-subpanel="w2-project">
-    <div class="feature-factory-header">
-      <h1>The Spec-Driven Feature Factory</h1>
-      <p>URL Shortener built spec-first with full requirement traceability</p>
-    </div>
 
-    <div class="parts-grid">
-      <div class="part-card">
-        <div class="part-num">Part 1</div>
-        <h3>YAML Prompt Library</h3>
-        <ul>
-          <li>4 structured YAML prompt templates</li>
-          <li>spec-writer, architect, code-reviewer, test-generator</li>
-          <li>Each with role, task, output_schema, and tags</li>
-          <li>Template variables for reusability</li>
-        </ul>
-      </div>
-      <div class="part-card">
-        <div class="part-num">Part 2</div>
-        <h3>Spec &amp; Diagrams</h3>
-        <ul>
-          <li>Formal spec: 7 FRs, 5 NFRs, 10 Gherkin scenarios</li>
-          <li>OpenAPI 3.0 contract with all endpoints</li>
-          <li>Mermaid diagrams: sequence, ER, state</li>
-          <li>SHALL/MUST normative language (RFC 2119)</li>
-        </ul>
-      </div>
-      <div class="part-card">
-        <div class="part-num">Part 3</div>
-        <h3>Implementation &amp; Self-Critique</h3>
-        <ul>
-          <li>Hono + TypeScript with REQ-ID traceability</li>
-          <li>In-memory store, URL validator, short code generator</li>
-          <li>2-cycle self-critique loop (security: 6&rarr;9/10)</li>
-          <li>JSON schema-enforced output from Claude</li>
-        </ul>
-      </div>
-      <div class="part-card">
-        <div class="part-num">Part 4</div>
-        <h3>Tests &amp; Traceability</h3>
-        <ul>
-          <li>23 vitest tests across 5 test files (100% pass)</li>
-          <li>Traceability matrix: REQ &rarr; code &rarr; test</li>
-          <li>12-question reflection report with real data</li>
-          <li>Security scan: zero secrets in source</li>
-        </ul>
-      </div>
-    </div>
-
-    <div class="deliverables-section">
-      <h2><span>Deliverables</span> Checklist</h2>
-      <ul class="checklist">
-        <li><span class="check-icon">&#10003;</span> prompts/ &mdash; 4 YAML prompt templates</li>
-        <li><span class="check-icon">&#10003;</span> specs/url-shortener.yaml &mdash; full formal specification</li>
-        <li><span class="check-icon">&#10003;</span> specs/diagrams/ &mdash; 3 Mermaid diagrams</li>
-        <li><span class="check-icon">&#10003;</span> src/ &mdash; Hono/TypeScript implementation with REQ-ID comments</li>
-        <li><span class="check-icon">&#10003;</span> tests/ &mdash; auto-generated vitest suite (23 tests)</li>
-        <li><span class="check-icon">&#10003;</span> docs/traceability-matrix.md &mdash; requirement &rarr; code &rarr; test mapping</li>
-        <li><span class="check-icon">&#10003;</span> docs/self-critique-log.md &mdash; generate &rarr; review &rarr; fix cycles</li>
-        <li><span class="check-icon">&#10003;</span> REPORT.md &mdash; answers to all 12 questions</li>
+    <!-- Local nav (matching Week 1 mini-project-nav pattern) -->
+    <div class="mini-project-nav">
+      <ul>
+        <li><a href="#w2p-overview">Overview</a></li>
+        <li><a href="#w2p-sequence">Request Flow</a></li>
+        <li><a href="#w2p-er">Data Model</a></li>
+        <li><a href="#w2p-state">URL Lifecycle</a></li>
+        <li><a href="#w2p-traceability">Traceability</a></li>
       </ul>
     </div>
 
-    <div class="repo-link-section">
-      <p>Repository link will appear upon submission</p>
-    </div>
+    <!-- W2 Hero -->
+    <header class="hero" id="w2p-overview">
+      <h1>The Spec-Driven Feature Factory</h1>
+      <p>URL Shortener built spec-first with full requirement traceability</p>
+      <div class="badge">7 FRs &bull; 5 NFRs &bull; 10 Gherkin scenarios &bull; 23 tests passing</div>
+    </header>
+
+    <!-- Part summary cards -->
+    <section>
+      <h2><span>#1</span> Project Overview</h2>
+      <p class="section-desc">Four-part spec-driven development pipeline: prompts &rarr; spec &rarr; implementation &rarr; tests.</p>
+      <div class="parts-grid">
+        <div class="part-card">
+          <div class="part-num">Part 1</div>
+          <h3>YAML Prompt Library</h3>
+          <ul>
+            <li>4 structured YAML templates: spec-writer, architect, code-reviewer, test-generator</li>
+            <li>Each with role, task, output_schema, tags, and {{ variable }} parameterization</li>
+          </ul>
+        </div>
+        <div class="part-card">
+          <div class="part-num">Part 2</div>
+          <h3>Spec &amp; Diagrams</h3>
+          <ul>
+            <li>Formal spec with 7 FRs, 5 NFRs, 10 Gherkin scenarios</li>
+            <li>OpenAPI 3.0 contract. SHALL/MUST normative language (RFC 2119)</li>
+            <li>3 Mermaid diagrams: sequence, ER, state</li>
+          </ul>
+        </div>
+        <div class="part-card">
+          <div class="part-num">Part 3</div>
+          <h3>Implementation &amp; Self-Critique</h3>
+          <ul>
+            <li>Hono + TypeScript with REQ-ID traceability comments</li>
+            <li>In-memory store, URL validator, short code generator</li>
+            <li>2-cycle self-critique loop (security score: 6&rarr;9/10)</li>
+            <li>JSON schema-enforced output from Claude</li>
+          </ul>
+        </div>
+        <div class="part-card">
+          <div class="part-num">Part 4</div>
+          <h3>Tests &amp; Traceability</h3>
+          <ul>
+            <li>23 vitest tests across 5 test files (100% pass)</li>
+            <li>Traceability matrix: REQ &rarr; code &rarr; test</li>
+            <li>12-question reflection report with real data</li>
+            <li>Security scan: zero secrets in source</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="deliverables-section">
+        <h2><span>Deliverables</span> Checklist</h2>
+        <ul class="checklist">
+          <li><span class="check-icon">&#10003;</span> prompts/ &mdash; 4 YAML prompt templates</li>
+          <li><span class="check-icon">&#10003;</span> specs/url-shortener.yaml &mdash; full formal specification</li>
+          <li><span class="check-icon">&#10003;</span> specs/diagrams/ &mdash; 3 Mermaid diagrams</li>
+          <li><span class="check-icon">&#10003;</span> src/ &mdash; Hono/TypeScript implementation with REQ-ID comments</li>
+          <li><span class="check-icon">&#10003;</span> tests/ &mdash; auto-generated vitest suite (23 tests)</li>
+          <li><span class="check-icon">&#10003;</span> docs/traceability-matrix.md &mdash; requirement &rarr; code &rarr; test mapping</li>
+          <li><span class="check-icon">&#10003;</span> docs/self-critique-log.md &mdash; generate &rarr; review &rarr; fix cycles</li>
+          <li><span class="check-icon">&#10003;</span> REPORT.md &mdash; answers to all 12 questions</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- W2 Sequence Diagram -->
+    <section id="w2p-sequence">
+      <h2><span>#2</span> Request Flow</h2>
+      <p class="section-desc">URL shortening and redirect flow &mdash; POST /shorten and GET /:code lifecycle.</p>
+      <div class="mermaid-container">
+        <pre class="mermaid">
+sequenceDiagram
+    participant Client
+    participant API as Hono API
+    participant Validator as URL Validator
+    participant Store as Data Store
+    participant Analytics as Analytics Recorder
+
+    rect rgb(22, 27, 34)
+    Note over Client,Analytics: POST /shorten Flow
+    Client->>API: POST /shorten { url, expiresAt? }
+    API->>API: Check rate limit (60 req/min per IP)
+    alt Rate limit exceeded
+        API-->>Client: 429 Too Many Requests + Retry-After
+    end
+    API->>Validator: Validate URL format, length, scheme
+    alt Invalid URL
+        Validator-->>API: Validation failed
+        API-->>Client: 400 { error: { code: 400, message } }
+    end
+    Validator->>Validator: Check blocklist
+    alt Blocklisted domain
+        Validator-->>API: Domain blocked
+        API-->>Client: 403 { error: { code: 403, message } }
+    end
+    API->>Store: Check for existing URL
+    alt Duplicate URL
+        Store-->>API: Existing record found
+        API-->>Client: 409 { existing shortUrl }
+    end
+    API->>API: Generate unique short code (6-8 chars)
+    API->>Store: Save { shortCode, originalUrl, createdAt, expiresAt }
+    Store-->>API: Saved
+    API-->>Client: 201 { shortUrl, originalUrl, shortCode, createdAt, expiresAt }
+    end
+
+    rect rgb(22, 27, 34)
+    Note over Client,Analytics: GET /:code Redirect Flow
+    Client->>API: GET /:code
+    API->>Store: Lookup by shortCode
+    alt Not found
+        Store-->>API: null
+        API-->>Client: 404 { error: { code: 404, message } }
+    end
+    Store-->>API: URL record
+    API->>API: Check expiresAt
+    alt Expired
+        API-->>Client: 410 { error: { code: 410, message: "URL has expired" } }
+    end
+    alt Deleted
+        API-->>Client: 410 { error: { code: 410, message: "URL has been deleted" } }
+    end
+    API->>Analytics: Record event { timestamp, referrer, ipHash }
+    Analytics-->>API: Recorded
+    API-->>Client: 301 Location: originalUrl
+    end
+        </pre>
+      </div>
+    </section>
+
+    <!-- W2 ER Diagram -->
+    <section id="w2p-er">
+      <h2><span>#3</span> Data Model</h2>
+      <p class="section-desc">Entity relationships: urls and analytics_events tables.</p>
+      <div class="mermaid-container">
+        <pre class="mermaid">
+erDiagram
+    urls {
+        string id PK "UUID primary key"
+        string original_url "Original long URL (max 2048 chars)"
+        string short_code UK "Unique 6-8 alphanumeric code"
+        datetime created_at "Creation timestamp"
+        datetime expires_at "Optional expiration timestamp"
+        boolean is_active "false if deleted"
+    }
+
+    analytics_events {
+        string id PK "UUID primary key"
+        string url_id FK "References urls.id"
+        datetime accessed_at "Timestamp of the redirect"
+        string referrer "HTTP Referer header value"
+        string ip_hash "SHA-256 hash of client IP"
+    }
+
+    urls ||--o{ analytics_events : "has"
+        </pre>
+      </div>
+    </section>
+
+    <!-- W2 State Diagram -->
+    <section id="w2p-state">
+      <h2><span>#4</span> URL Lifecycle</h2>
+      <p class="section-desc">URL state transitions: active &rarr; expired &rarr; deleted.</p>
+      <div class="mermaid-container">
+        <pre class="mermaid">
+stateDiagram-v2
+    [*] --> Active : POST /shorten creates URL
+
+    Active --> Expired : expires_at timestamp reached
+    Active --> Deleted : DELETE /:code called
+
+    Expired --> Deleted : DELETE /:code called or cleanup job
+
+    Deleted --> [*]
+
+    Active : GET /:code returns 301 redirect
+    Active : Analytics events are recorded
+
+    Expired : GET /:code returns 410 Gone
+    Expired : Analytics data still accessible
+
+    Deleted : GET /:code returns 410 Gone
+    Deleted : Analytics data preserved
+        </pre>
+      </div>
+    </section>
+
+    <!-- W2 Traceability Matrix -->
+    <section id="w2p-traceability">
+      <h2><span>#5</span> Traceability Matrix</h2>
+      <p class="section-desc">Requirement &rarr; code &rarr; test &rarr; status mapping for all REQ-SHORT requirements.</p>
+      <table class="audit-table">
+        <thead>
+          <tr><th>REQ-ID</th><th>Description</th><th>Code File</th><th>Test File</th><th>Status</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>REQ-SHORT-001</td><td>Shorten valid URL into unique short code</td><td><code>routes/shorten.ts</code>, <code>lib/shortener.ts</code>, <code>lib/store.ts</code></td><td><code>shorten.test.ts</code></td><td><span class="status-badge st-fixed">PASS</span></td></tr>
+          <tr><td>REQ-SHORT-002</td><td>Redirect short URL to original</td><td><code>routes/redirect.ts</code></td><td><code>redirect.test.ts</code></td><td><span class="status-badge st-fixed">PASS</span></td></tr>
+          <tr><td>REQ-SHORT-003</td><td>Track analytics per redirect</td><td><code>routes/redirect.ts</code>, <code>routes/analytics.ts</code>, <code>lib/store.ts</code></td><td><code>analytics.test.ts</code>, <code>redirect.test.ts</code></td><td><span class="status-badge st-fixed">PASS</span></td></tr>
+          <tr><td>REQ-SHORT-004</td><td>Optional URL expiration (410 on expired)</td><td><code>routes/shorten.ts</code>, <code>routes/redirect.ts</code></td><td><code>expiry.test.ts</code>, <code>redirect.test.ts</code></td><td><span class="status-badge st-fixed">PASS</span></td></tr>
+          <tr><td>REQ-SHORT-005</td><td>Input validation, blocklist, duplicates</td><td><code>lib/validator.ts</code>, <code>routes/shorten.ts</code></td><td><code>validator.test.ts</code>, <code>shorten.test.ts</code></td><td><span class="status-badge st-fixed">PASS</span></td></tr>
+          <tr><td>REQ-SHORT-006</td><td>Delete short URL (soft delete)</td><td><code>routes/delete.ts</code></td><td>&mdash;</td><td><span class="status-badge st-risk">PARTIAL</span></td></tr>
+          <tr><td>REQ-SHORT-007</td><td>Consistent error response envelope</td><td><code>routes/*.ts</code>, <code>index.ts</code></td><td><code>shorten.test.ts</code></td><td><span class="status-badge st-fixed">PASS</span></td></tr>
+        </tbody>
+      </table>
+      <p style="color:#8b949e; font-size:0.9rem; margin-top:1rem;">Total: 7 requirements &bull; Fully covered: 6 &bull; Partially covered: 1 &bull; Not covered: 0</p>
+    </section>
+
   </div>
 </div><!-- end week 2 panel -->
 
@@ -936,29 +1092,38 @@ mermaid.initialize({
     });
   });
 
-  // Track initialization state
-  var mermaidRendered = false;
+  // Track initialization state per week
+  var mermaidRenderedW1 = false;
+  var mermaidRenderedW2 = false;
   var d3Initialized = true; // D3 already runs above
 
-  function renderMermaidDiagrams() {
-    if (mermaidRendered) return;
-    var panel = document.querySelector('[data-subpanel="w1-project"]');
+  function renderMermaidForPanel(panelSelector, flagName) {
+    var panel = document.querySelector(panelSelector);
     if (!panel) return;
-    // Reset any failed renders - remove data-processed and error containers
     panel.querySelectorAll('.mermaid').forEach(function(el) {
       if (el.getAttribute('data-processed')) {
         el.removeAttribute('data-processed');
       }
-      // If mermaid replaced content with error SVG, restore original
       if (el.dataset.original) {
         el.innerHTML = el.dataset.original;
       }
     });
     mermaid.run({ nodes: panel.querySelectorAll('.mermaid') }).then(function() {
-      mermaidRendered = true;
+      if (flagName === 'w1') mermaidRenderedW1 = true;
+      if (flagName === 'w2') mermaidRenderedW2 = true;
     }).catch(function(err) {
       console.warn('Mermaid render error:', err);
     });
+  }
+
+  function renderMermaidDiagrams() {
+    if (mermaidRenderedW1) return;
+    renderMermaidForPanel('[data-subpanel="w1-project"]', 'w1');
+  }
+
+  function renderMermaidW2() {
+    if (mermaidRenderedW2) return;
+    renderMermaidForPanel('[data-subpanel="w2-project"]', 'w2');
   }
 
   // Sub-tabs (delegation)
@@ -978,14 +1143,17 @@ mermaid.initialize({
     if (targetSubPanel) {
       targetSubPanel.classList.add('active');
 
-      // Render mermaid diagrams when Week 1 project tab is first shown
+      // Render mermaid diagrams when project tabs are first shown
       if (subtabId === 'w1-project') {
         setTimeout(renderMermaidDiagrams, 150);
+      }
+      if (subtabId === 'w2-project') {
+        setTimeout(renderMermaidW2, 150);
       }
     }
   });
 
-  // Also handle week tab clicks — if switching TO week 1 and project tab is active, render
+  // Also handle week tab clicks — render mermaid if project tab is active
   document.querySelectorAll('.week-tab').forEach(function(tab) {
     tab.addEventListener('click', function() {
       var week = this.getAttribute('data-week');
@@ -995,11 +1163,20 @@ mermaid.initialize({
           setTimeout(renderMermaidDiagrams, 150);
         }
       }
+      if (week === '2') {
+        var projectTab2 = document.querySelector('[data-subpanel="w2-project"]');
+        if (projectTab2 && projectTab2.classList.contains('active')) {
+          setTimeout(renderMermaidW2, 150);
+        }
+      }
     });
   });
 
   // Store original mermaid source before any processing attempts
   document.querySelectorAll('[data-subpanel="w1-project"] .mermaid').forEach(function(el) {
+    el.dataset.original = el.innerHTML;
+  });
+  document.querySelectorAll('[data-subpanel="w2-project"] .mermaid').forEach(function(el) {
     el.dataset.original = el.innerHTML;
   });
 })();
