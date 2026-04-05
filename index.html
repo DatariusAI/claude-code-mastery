@@ -3,12 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Hono Codebase Detective</title>
+<title>Claude Code Mastery</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
 <style>
+  /* ===== ORIGINAL CSS (preserved exactly) ===== */
   * { margin: 0; padding: 0; box-sizing: border-box; }
   html { scroll-behavior: smooth; }
   body { background: #0d1117; color: #e6edf3; font-family: 'Inter', sans-serif; line-height: 1.6; }
@@ -70,28 +71,192 @@
   footer { text-align: center; padding: 3rem 2rem; border-top: 1px solid #21262d; color: #484f58; font-size: 0.85rem; }
   footer a { color: #58a6ff; text-decoration: none; }
   footer a:hover { text-decoration: underline; }
+
+  /* ===== NEW CSS for tabbed shell ===== */
+  .program-header { padding: 3rem 2rem 1.5rem; text-align: center;
+    background: linear-gradient(180deg, #161b22 0%, #0d1117 100%); border-bottom: 1px solid #21262d; }
+  .program-header h1 { font-size: 2.4rem; font-weight: 700;
+    background: linear-gradient(135deg, #58a6ff, #bc8cff, #f778ba);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin-bottom: 0.3rem; }
+  .program-header .subtitle { font-size: 1rem; color: #8b949e; font-weight: 300; margin-bottom: 1rem; }
+  .program-header .badge-row { display: flex; justify-content: center; gap: 0.75rem; flex-wrap: wrap; }
+  .program-header .badge-row .badge { display: inline-block; padding: 0.3rem 0.9rem; border-radius: 2rem;
+    border: 1px solid #30363d; color: #58a6ff; font-size: 0.75rem; font-weight: 500; }
+  .week-tabs { display: flex; overflow-x: auto; background: #0d1117; border-bottom: 2px solid #21262d;
+    padding: 0 1rem; gap: 0; max-width: 1200px; margin: 0 auto;
+    scrollbar-width: thin; scrollbar-color: #30363d transparent; }
+  .week-tabs::-webkit-scrollbar { height: 4px; }
+  .week-tabs::-webkit-scrollbar-thumb { background: #30363d; border-radius: 2px; }
+  .week-tab { flex-shrink: 0; padding: 0.9rem 1.3rem; color: #8b949e; font-size: 0.8rem; font-weight: 500;
+    cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -2px;
+    transition: color 0.2s, border-color 0.2s; display: flex; align-items: center; gap: 0.5rem;
+    white-space: nowrap; user-select: none; letter-spacing: 0.02em;
+    background: none; border-top: none; border-left: none; border-right: none; font-family: 'Inter', sans-serif; }
+  .week-tab:hover { color: #e6edf3; }
+  .week-tab.active { color: #58a6ff; border-bottom-color: #58a6ff; }
+  .status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
+  .status-dot.complete { background: #3fb950; }
+  .status-dot.in-progress { background: #bc8cff; }
+  .status-dot.upcoming { background: #484f58; }
+  .week-panel { display: none; }
+  .week-panel.active { display: block; }
+  .sub-tabs { display: flex; gap: 0; border-bottom: 1px solid #21262d;
+    max-width: 1200px; margin: 0 auto; padding: 0 2rem; background: #0d1117; }
+  .sub-tab { padding: 0.75rem 1.2rem; color: #8b949e; font-size: 0.8rem; font-weight: 500;
+    cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px;
+    transition: color 0.2s, border-color 0.2s; white-space: nowrap; user-select: none;
+    background: none; border-top: none; border-left: none; border-right: none;
+    font-family: 'Inter', sans-serif; letter-spacing: 0.02em; }
+  .sub-tab:hover { color: #e6edf3; }
+  .sub-tab.active { color: #58a6ff; border-bottom-color: #58a6ff; }
+  .sub-panel { display: none; }
+  .sub-panel.active { display: block; }
+  .session-card { background: #161b22; border: 1px solid #21262d; border-radius: 12px; padding: 2rem; margin-bottom: 1.5rem; }
+  .session-card .session-num { display: inline-block; padding: 0.3rem 0.9rem; border-radius: 2rem;
+    border: 1px solid #30363d; color: #58a6ff; font-size: 0.75rem; font-weight: 500; margin-bottom: 0.75rem; }
+  .session-card h3 { font-size: 1.3rem; font-weight: 600; color: #e6edf3; margin-bottom: 0.3rem; }
+  .session-card .session-date { font-size: 0.85rem; color: #8b949e; margin-bottom: 1rem; }
+  .session-card ul { list-style: none; padding: 0; }
+  .session-card ul li { padding: 0.3rem 0; color: #8b949e; font-size: 0.9rem; padding-left: 1.2rem; position: relative; }
+  .session-card ul li::before { content: "\2022"; color: #58a6ff; position: absolute; left: 0; }
+  .week-overview-container { max-width: 1200px; margin: 0 auto; padding: 2rem; }
+  .week-overview-container h2 { font-size: 1.8rem; font-weight: 600; margin-bottom: 0.5rem; color: #e6edf3;
+    padding-bottom: 0.5rem; border-bottom: 1px solid #21262d; }
+  .week-overview-container h2 span { color: #58a6ff; }
+  .week-overview-desc { color: #8b949e; margin-bottom: 2rem; font-size: 0.95rem; }
+  .coming-soon { display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 6rem 2rem; text-align: center; }
+  .coming-soon-icon { width: 80px; height: 80px; border-radius: 50%; background: #161b22;
+    border: 1px solid #21262d; display: flex; align-items: center; justify-content: center;
+    font-size: 2rem; margin-bottom: 1.5rem; color: #484f58; }
+  .coming-soon h3 { font-size: 1.4rem; font-weight: 600; color: #8b949e; margin-bottom: 0.5rem; }
+  .coming-soon p { color: #484f58; font-size: 0.95rem; max-width: 400px; }
+  .mini-project-nav { position: sticky; top: 0; width: 100%; background: rgba(13,17,23,0.95);
+    backdrop-filter: blur(12px); border-bottom: 1px solid #21262d; z-index: 90; padding: 0 2rem; }
+  .mini-project-nav ul { display: flex; list-style: none; max-width: 1200px; margin: 0 auto; gap: 0; }
+  .mini-project-nav a { display: block; padding: 0.8rem 1.2rem; color: #8b949e; text-decoration: none;
+    font-size: 0.82rem; font-weight: 500; letter-spacing: 0.02em; transition: color 0.2s;
+    border-bottom: 2px solid transparent; }
+  .mini-project-nav a:hover { color: #58a6ff; border-bottom-color: #58a6ff; }
+  .feature-factory-header { padding: 4rem 2rem 3rem; text-align: center;
+    background: linear-gradient(180deg, #161b22 0%, #0d1117 100%); border-bottom: 1px solid #21262d; }
+  .feature-factory-header h1 { font-size: 2.4rem; font-weight: 700;
+    background: linear-gradient(135deg, #58a6ff, #bc8cff, #f778ba);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin-bottom: 0.5rem; }
+  .feature-factory-header p { font-size: 1.05rem; color: #8b949e; font-weight: 300; }
+  .parts-grid { max-width: 1200px; margin: 0 auto; padding: 2rem;
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; }
+  .part-card { background: #161b22; border: 1px solid #21262d; border-radius: 12px; padding: 2rem; }
+  .part-card .part-num { display: inline-block; padding: 0.3rem 0.9rem; border-radius: 2rem;
+    border: 1px solid #30363d; color: #bc8cff; font-size: 0.75rem; font-weight: 500; margin-bottom: 0.75rem; }
+  .part-card h3 { font-size: 1.15rem; font-weight: 600; color: #e6edf3; margin-bottom: 0.75rem; }
+  .part-card ul { list-style: none; padding: 0; }
+  .part-card ul li { padding: 0.25rem 0; color: #8b949e; font-size: 0.85rem; padding-left: 1.2rem; position: relative; }
+  .part-card ul li::before { content: "\2022"; color: #bc8cff; position: absolute; left: 0; }
+  .deliverables-section { max-width: 1200px; margin: 0 auto; padding: 2rem; }
+  .deliverables-section h2 { font-size: 1.5rem; font-weight: 600; color: #e6edf3;
+    margin-bottom: 1.5rem; padding-bottom: 0.5rem; border-bottom: 1px solid #21262d; }
+  .deliverables-section h2 span { color: #58a6ff; }
+  .checklist { list-style: none; padding: 0; }
+  .checklist li { background: #161b22; border: 1px solid #21262d; border-radius: 8px;
+    padding: 0.8rem 1.2rem; margin-bottom: 0.5rem; color: #8b949e; font-size: 0.9rem;
+    display: flex; align-items: center; gap: 0.75rem; }
+  .checklist li .check-icon { color: #3fb950; font-weight: 700; flex-shrink: 0; }
+  .repo-link-section { max-width: 1200px; margin: 0 auto; padding: 1rem 2rem 3rem; text-align: center; }
+  .repo-link-section a { display: inline-block; padding: 0.7rem 2rem; border-radius: 8px;
+    background: #161b22; border: 1px solid #30363d; color: #58a6ff; text-decoration: none;
+    font-size: 0.9rem; font-weight: 500; transition: border-color 0.2s; }
+  .repo-link-section a:hover { border-color: #58a6ff; }
 </style>
 </head>
 <body>
 
-<nav>
-  <ul>
-    <li><a href="#overview">Overview</a></li>
-    <li><a href="#architecture">Architecture</a></li>
-    <li><a href="#request-flow">Request Flow</a></li>
-    <li><a href="#state-diagram">State Diagram</a></li>
-    <li><a href="#module-map">Module Map</a></li>
-    <li><a href="#bug-audit">Bug Audit</a></li>
-  </ul>
-</nav>
+<!-- ===== PROGRAM HEADER ===== -->
+<div class="program-header">
+  <h1>Claude Code Mastery</h1>
+  <p class="subtitle">AI-Augmented Software Engineering &middot; 7-Week Program</p>
+  <div class="badge-row">
+    <span class="badge">7 Weeks</span>
+    <span class="badge">14 Sessions</span>
+    <span class="badge">Analytics Vidhya</span>
+  </div>
+</div>
 
-<header class="hero" id="overview">
-  <h1>Hono Codebase Detective</h1>
-  <p>Mini Project 1 &mdash; Mohammad Alrashed</p>
-  <div class="badge">honojs/hono v4.12.9 &bull; 184 modules &bull; 470 dependencies</div>
-</header>
+<!-- ===== WEEK TABS ===== -->
+<div class="week-tabs" role="tablist">
+  <button class="week-tab active" data-week="1" role="tab"><span class="status-dot complete"></span>W 01 &middot; Foundations</button>
+  <button class="week-tab" data-week="2" role="tab"><span class="status-dot in-progress"></span>W 02 &middot; Prompt Eng.</button>
+  <button class="week-tab" data-week="3" role="tab"><span class="status-dot upcoming"></span>W 03 &middot; Automation</button>
+  <button class="week-tab" data-week="4" role="tab"><span class="status-dot upcoming"></span>W 04 &middot; Scale</button>
+  <button class="week-tab" data-week="5" role="tab"><span class="status-dot upcoming"></span>W 05 &middot; Multi-Agent</button>
+  <button class="week-tab" data-week="6" role="tab"><span class="status-dot upcoming"></span>W 06 &middot; CI/CD</button>
+  <button class="week-tab" data-week="7" role="tab"><span class="status-dot upcoming"></span>W 07 &middot; Capstone</button>
+</div>
 
-<section id="architecture">
+<!-- ================================================================ -->
+<!-- WEEK 1 PANEL -->
+<!-- ================================================================ -->
+<div class="week-panel active" data-week-panel="1">
+  <!-- Sub-tabs -->
+  <div class="sub-tabs">
+    <button class="sub-tab active" data-subtab="w1-overview">Week Overview</button>
+    <button class="sub-tab" data-subtab="w1-project">Mini Project &mdash; Codebase Detective</button>
+  </div>
+
+  <!-- W1 Overview -->
+  <div class="sub-panel active" data-subpanel="w1-overview">
+    <div class="week-overview-container">
+      <h2><span>Week 1</span> &mdash; Foundations</h2>
+      <p class="week-overview-desc">Getting started with Claude Code: setup, mental models, and deep codebase investigation.</p>
+
+      <div class="session-card">
+        <div class="session-num">Session 1</div>
+        <h3>Foundations of Claude Code</h3>
+        <p class="session-date">29 March 2025</p>
+        <ul>
+          <li>Installation &amp; environment setup</li>
+          <li>First prompts and basic workflows</li>
+          <li>Understanding the Claude Code interface</li>
+          <li>CLAUDE.md configuration</li>
+        </ul>
+      </div>
+
+      <div class="session-card">
+        <div class="session-num">Session 2</div>
+        <h3>Claude Code Mental Models &amp; Deep Investigation</h3>
+        <p class="session-date">4 April 2025</p>
+        <ul>
+          <li>How Claude Code reads and understands codebases</li>
+          <li>Effective investigation strategies</li>
+          <li>Dependency mapping and architecture analysis</li>
+          <li>Bug hunting with AI assistance</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- W1 Mini Project: Codebase Detective (ALL ORIGINAL CONTENT) -->
+  <div class="sub-panel" data-subpanel="w1-project">
+
+    <!-- Local nav (was the old fixed nav) -->
+    <div class="mini-project-nav">
+      <ul>
+        <li><a href="#w1p-overview">Overview</a></li>
+        <li><a href="#w1p-architecture">Architecture</a></li>
+        <li><a href="#w1p-request-flow">Request Flow</a></li>
+        <li><a href="#w1p-state-diagram">State Diagram</a></li>
+        <li><a href="#w1p-module-map">Module Map</a></li>
+        <li><a href="#w1p-bug-audit">Bug Audit</a></li>
+      </ul>
+    </div>
+
+    <header class="hero" id="w1p-overview">
+      <h1>Hono Codebase Detective</h1>
+      <p>Mini Project 1 &mdash; Week 1 Capstone</p>
+      <div class="badge">honojs/hono v4.12.9 &bull; 184 modules &bull; 470 dependencies</div>
+    </header>
+
+<section id="w1p-architecture">
   <h2><span>#1</span> Architecture Diagram</h2>
   <p class="section-desc">Hono's layered module architecture. Dependencies flow downward &mdash; no circular imports exist.</p>
   <div class="mermaid-container">
@@ -175,7 +340,7 @@ flowchart TB
   </div>
 </section>
 
-<section id="request-flow">
+<section id="w1p-request-flow">
   <h2><span>#2</span> Request Lifecycle</h2>
   <p class="section-desc">How a GET request flows through Hono: client &rarr; adapter &rarr; router &rarr; middleware &rarr; handler &rarr; response.</p>
   <div class="mermaid-container">
@@ -223,7 +388,7 @@ sequenceDiagram
   </div>
 </section>
 
-<section id="state-diagram">
+<section id="w1p-state-diagram">
   <h2><span>#3</span> Context State Diagram</h2>
   <p class="section-desc">State transitions of the Context object during request processing.</p>
   <div class="mermaid-container">
@@ -254,7 +419,7 @@ stateDiagram-v2
   </div>
 </section>
 
-<section id="module-map">
+<section id="w1p-module-map">
   <h2><span>#4</span> Module Dependency Map</h2>
   <p class="section-desc">Interactive force-directed graph of all 184 modules and 470 import relationships. Drag nodes, zoom, and search.</p>
   <div id="d3-container">
@@ -276,7 +441,7 @@ stateDiagram-v2
   <div id="d3-tooltip"></div>
 </section>
 
-<section id="bug-audit">
+<section id="w1p-bug-audit">
   <h2><span>#5</span> Bug Audit Summary</h2>
   <p class="section-desc">Findings from AI-assisted source code review of honojs/hono v4.12.9.</p>
   <table class="audit-table">
@@ -294,10 +459,341 @@ stateDiagram-v2
   </table>
 </section>
 
+    <footer>
+      <p>Hono Codebase Detective &mdash; Mini Project 1</p>
+      <p><a href="https://github.com/DatariusAI/codebase-detective-hono" target="_blank">github.com/DatariusAI/codebase-detective-hono</a></p>
+    </footer>
+
+  </div><!-- end w1-project sub-panel -->
+</div><!-- end week 1 panel -->
+
+<!-- ================================================================ -->
+<!-- WEEK 2 PANEL -->
+<!-- ================================================================ -->
+<div class="week-panel" data-week-panel="2">
+  <div class="sub-tabs">
+    <button class="sub-tab active" data-subtab="w2-overview">Week Overview</button>
+    <button class="sub-tab" data-subtab="w2-project">Mini Project &mdash; Feature Factory</button>
+  </div>
+
+  <div class="sub-panel active" data-subpanel="w2-overview">
+    <div class="week-overview-container">
+      <h2><span>Week 2</span> &mdash; Prompt Engineering</h2>
+      <p class="week-overview-desc">Mastering prompt engineering and spec-driven development with Claude Code.</p>
+
+      <div class="session-card">
+        <div class="session-num">Session 3</div>
+        <h3>Prompt Engineering Fundamentals</h3>
+        <p class="session-date">5 April 2025</p>
+        <ul>
+          <li>Anatomy of effective prompts</li>
+          <li>Context management and token optimization</li>
+          <li>Chain-of-thought prompting strategies</li>
+          <li>Iterative refinement techniques</li>
+        </ul>
+      </div>
+
+      <div class="session-card">
+        <div class="session-num">Session 4</div>
+        <h3>Spec-Driven Development</h3>
+        <p class="session-date">11 April 2025</p>
+        <ul>
+          <li>Writing PRDs for AI-assisted development</li>
+          <li>API specification design</li>
+          <li>Test-first development with Claude Code</li>
+          <li>From specification to implementation</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="sub-panel" data-subpanel="w2-project">
+    <div class="feature-factory-header">
+      <h1>Spec-Driven Feature Factory: URL Shortener</h1>
+      <p>Build a complete URL shortener from specification to deployment using Claude Code</p>
+    </div>
+
+    <div class="parts-grid">
+      <div class="part-card">
+        <div class="part-num">Part 1</div>
+        <h3>Design &amp; Specification</h3>
+        <ul>
+          <li>Write a Product Requirements Document (PRD)</li>
+          <li>Define API specification (OpenAPI/Swagger)</li>
+          <li>Create a comprehensive test plan</li>
+          <li>Design data models and schemas</li>
+        </ul>
+      </div>
+      <div class="part-card">
+        <div class="part-num">Part 2</div>
+        <h3>Implementation</h3>
+        <ul>
+          <li>Build URL shortener with Claude Code from spec</li>
+          <li>Implement REST API endpoints</li>
+          <li>Add URL validation and sanitization</li>
+          <li>Set up database and storage layer</li>
+        </ul>
+      </div>
+      <div class="part-card">
+        <div class="part-num">Part 3</div>
+        <h3>Testing &amp; Validation</h3>
+        <ul>
+          <li>Automated test suite (unit + integration)</li>
+          <li>Edge case coverage</li>
+          <li>Performance and load testing</li>
+          <li>Security validation</li>
+        </ul>
+      </div>
+      <div class="part-card">
+        <div class="part-num">Part 4</div>
+        <h3>Documentation &amp; Reflection</h3>
+        <ul>
+          <li>12 reflection questions on the process</li>
+          <li>Prompt engineering lessons learned</li>
+          <li>Spec vs. implementation gap analysis</li>
+          <li>Best practices documentation</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="deliverables-section">
+      <h2><span>Deliverables</span> Checklist</h2>
+      <ul class="checklist">
+        <li><span class="check-icon">&#10003;</span> Product Requirements Document (PRD)</li>
+        <li><span class="check-icon">&#10003;</span> API Specification (OpenAPI/Swagger)</li>
+        <li><span class="check-icon">&#10003;</span> Working URL Shortener Application</li>
+        <li><span class="check-icon">&#10003;</span> Automated Test Suite</li>
+        <li><span class="check-icon">&#10003;</span> Reflection Document (12 Questions)</li>
+        <li><span class="check-icon">&#10003;</span> GitHub Repository with Clean History</li>
+      </ul>
+    </div>
+
+    <div class="repo-link-section">
+      <a href="https://github.com/DatariusAI/url-shortener" target="_blank">View Repository &rarr; github.com/DatariusAI/url-shortener</a>
+    </div>
+  </div>
+</div><!-- end week 2 panel -->
+
+<!-- ================================================================ -->
+<!-- WEEK 3 PANEL -->
+<!-- ================================================================ -->
+<div class="week-panel" data-week-panel="3">
+  <div class="sub-tabs">
+    <button class="sub-tab active" data-subtab="w3-overview">Week Overview</button>
+    <button class="sub-tab" data-subtab="w3-project">Mini Project &mdash; MCP Toolkit</button>
+  </div>
+  <div class="sub-panel active" data-subpanel="w3-overview">
+    <div class="week-overview-container">
+      <h2><span>Week 3</span> &mdash; Automation</h2>
+      <p class="week-overview-desc">MCP servers, skills, and plugin development for Claude Code automation.</p>
+      <div class="session-card">
+        <div class="session-num">Session 5</div>
+        <h3>MCP Servers in Enterprise</h3>
+        <p class="session-date">12 April 2025</p>
+        <ul>
+          <li>Model Context Protocol (MCP) architecture</li>
+          <li>Building custom MCP servers</li>
+          <li>Enterprise integration patterns</li>
+          <li>Security considerations for MCP</li>
+        </ul>
+      </div>
+      <div class="session-card">
+        <div class="session-num">Session 6</div>
+        <h3>Skills &amp; Plugins</h3>
+        <p class="session-date">18 April 2025</p>
+        <ul>
+          <li>Creating custom skills for Claude Code</li>
+          <li>Plugin architecture and development</li>
+          <li>Sharing and distributing skills</li>
+          <li>Automation workflow design</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="sub-panel" data-subpanel="w3-project">
+    <div class="coming-soon">
+      <div class="coming-soon-icon">&#9881;</div>
+      <h3>Coming Soon</h3>
+      <p>The MCP Toolkit mini project will be available when Week 3 begins on April 12.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ================================================================ -->
+<!-- WEEK 4 PANEL -->
+<!-- ================================================================ -->
+<div class="week-panel" data-week-panel="4">
+  <div class="sub-tabs">
+    <button class="sub-tab active" data-subtab="w4-overview">Week Overview</button>
+    <button class="sub-tab" data-subtab="w4-project">Mini Project &mdash; Scale Challenge</button>
+  </div>
+  <div class="sub-panel active" data-subpanel="w4-overview">
+    <div class="week-overview-container">
+      <h2><span>Week 4</span> &mdash; Scale</h2>
+      <p class="week-overview-desc">Multi-agent architecture and strategies for large codebase management.</p>
+      <div class="session-card">
+        <div class="session-num">Session 7</div>
+        <h3>Subagents &amp; Multi-Agent Architecture</h3>
+        <p class="session-date">19 April 2025</p>
+        <ul>
+          <li>Subagent patterns and orchestration</li>
+          <li>Multi-agent collaboration strategies</li>
+          <li>Task decomposition for agents</li>
+          <li>Error handling in multi-agent systems</li>
+        </ul>
+      </div>
+      <div class="session-card">
+        <div class="session-num">Session 8</div>
+        <h3>Large Codebase Strategy &amp; Context Scaling</h3>
+        <p class="session-date">25 April 2025</p>
+        <ul>
+          <li>Working with monorepos and large codebases</li>
+          <li>Context window optimization</li>
+          <li>Incremental analysis patterns</li>
+          <li>Scaling Claude Code for enterprise projects</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="sub-panel" data-subpanel="w4-project">
+    <div class="coming-soon">
+      <div class="coming-soon-icon">&#9881;</div>
+      <h3>Coming Soon</h3>
+      <p>The Scale Challenge mini project will be available when Week 4 begins on April 19.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ================================================================ -->
+<!-- WEEK 5 PANEL -->
+<!-- ================================================================ -->
+<div class="week-panel" data-week-panel="5">
+  <div class="sub-tabs">
+    <button class="sub-tab active" data-subtab="w5-overview">Week Overview</button>
+    <button class="sub-tab" data-subtab="w5-project">Mini Project &mdash; CI/CD Pipeline</button>
+  </div>
+  <div class="sub-panel active" data-subpanel="w5-overview">
+    <div class="week-overview-container">
+      <h2><span>Week 5</span> &mdash; Multi-Agent</h2>
+      <p class="week-overview-desc">GitHub integration, CI/CD pipelines, and advanced debugging with Claude Code.</p>
+      <div class="session-card">
+        <div class="session-num">Session 9</div>
+        <h3>GitHub &amp; CI/CD Integration</h3>
+        <p class="session-date">26 April 2025</p>
+        <ul>
+          <li>GitHub Actions with Claude Code</li>
+          <li>Automated PR reviews and code analysis</li>
+          <li>CI/CD pipeline integration</li>
+          <li>Deployment automation</li>
+        </ul>
+      </div>
+      <div class="session-card">
+        <div class="session-num">Session 10</div>
+        <h3>Advanced Debugging &amp; Testing</h3>
+        <p class="session-date">2 May 2025</p>
+        <ul>
+          <li>AI-assisted debugging strategies</li>
+          <li>Test generation and coverage analysis</li>
+          <li>Performance profiling with Claude Code</li>
+          <li>Regression testing automation</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="sub-panel" data-subpanel="w5-project">
+    <div class="coming-soon">
+      <div class="coming-soon-icon">&#9881;</div>
+      <h3>Coming Soon</h3>
+      <p>The CI/CD Pipeline mini project will be available when Week 5 begins on April 26.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ================================================================ -->
+<!-- WEEK 6 PANEL -->
+<!-- ================================================================ -->
+<div class="week-panel" data-week-panel="6">
+  <div class="sub-tabs">
+    <button class="sub-tab active" data-subtab="w6-overview">Week Overview</button>
+    <button class="sub-tab" data-subtab="w6-project">Mini Project &mdash; Governance Suite</button>
+  </div>
+  <div class="sub-panel active" data-subpanel="w6-overview">
+    <div class="week-overview-container">
+      <h2><span>Week 6</span> &mdash; CI/CD</h2>
+      <p class="week-overview-desc">Security, governance, performance economics, and measurement frameworks.</p>
+      <div class="session-card">
+        <div class="session-num">Session 11</div>
+        <h3>Security Risk &amp; Governance</h3>
+        <p class="session-date">3 May 2025</p>
+        <ul>
+          <li>Security scanning with AI assistance</li>
+          <li>Governance frameworks for AI-generated code</li>
+          <li>Compliance and audit trails</li>
+          <li>Risk assessment methodologies</li>
+        </ul>
+      </div>
+      <div class="session-card">
+        <div class="session-num">Session 12</div>
+        <h3>Performance Economics &amp; Measurement</h3>
+        <p class="session-date">9 May 2025</p>
+        <ul>
+          <li>Measuring AI-assisted development ROI</li>
+          <li>Token usage optimization</li>
+          <li>Quality metrics and benchmarks</li>
+          <li>Cost-benefit analysis frameworks</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="sub-panel" data-subpanel="w6-project">
+    <div class="coming-soon">
+      <div class="coming-soon-icon">&#9881;</div>
+      <h3>Coming Soon</h3>
+      <p>The Governance Suite mini project will be available when Week 6 begins on May 3.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ================================================================ -->
+<!-- WEEK 7 PANEL -->
+<!-- ================================================================ -->
+<div class="week-panel" data-week-panel="7">
+  <div class="sub-tabs">
+    <button class="sub-tab active" data-subtab="w7-overview">Week Overview</button>
+    <button class="sub-tab" data-subtab="w7-project">Mini Project &mdash; Capstone</button>
+  </div>
+  <div class="sub-panel active" data-subpanel="w7-overview">
+    <div class="week-overview-container">
+      <h2><span>Week 7</span> &mdash; Capstone</h2>
+      <p class="week-overview-desc">Structured capstone project integrating all skills from the program.</p>
+      <div class="session-card">
+        <div class="session-num">Session 13</div>
+        <h3>Structured Capstone Project</h3>
+        <p class="session-date">9 May 2025</p>
+        <ul>
+          <li>Capstone project kickoff and scoping</li>
+          <li>End-to-end project with Claude Code</li>
+          <li>Integration of all learned techniques</li>
+          <li>Final presentations and peer review</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="sub-panel" data-subpanel="w7-project">
+    <div class="coming-soon">
+      <div class="coming-soon-icon">&#9881;</div>
+      <h3>Coming Soon</h3>
+      <p>The Capstone project details will be available when Week 7 begins on May 9.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ===== GLOBAL FOOTER ===== -->
 <footer>
-  <p>Hono Codebase Detective &mdash; Mini Project 1 &bull; Mohammad Alrashed</p>
-  <p><a href="https://github.com/DatariusAI/codebase-detective-hono" target="_blank">github.com/DatariusAI/codebase-detective-hono</a></p>
+  <p>Claude Code Mastery &mdash; AI-Augmented Software Engineering &middot; <a href="https://github.com/DatariusAI/claude-code-mastery" target="_blank">Analytics Vidhya</a></p>
+  <p><a href="https://github.com/DatariusAI/claude-code-mastery" target="_blank">github.com/DatariusAI/claude-code-mastery</a></p>
 </footer>
+
 
 <script>
 mermaid.initialize({
@@ -399,6 +895,75 @@ mermaid.initialize({
   setTimeout(function(){svg.transition().duration(800).call(
     zoom.transform,d3.zoomIdentity.translate(width*0.1,height*0.1).scale(0.85)
   )},1500);
+})();
+</script>
+
+<script>
+// ===== TAB SWITCHING LOGIC =====
+(function() {
+  var d3Initialized = false;
+
+  // Week tabs
+  var weekTabs = document.querySelectorAll('.week-tab');
+  var weekPanels = document.querySelectorAll('.week-panel');
+
+  weekTabs.forEach(function(tab) {
+    tab.addEventListener('click', function() {
+      var week = this.getAttribute('data-week');
+
+      // Update active tab
+      weekTabs.forEach(function(t) { t.classList.remove('active'); });
+      this.classList.add('active');
+
+      // Update active panel
+      weekPanels.forEach(function(p) { p.classList.remove('active'); });
+      var targetPanel = document.querySelector('[data-week-panel="' + week + '"]');
+      if (targetPanel) {
+        targetPanel.classList.add('active');
+
+        // Reset to first sub-tab
+        var subTabs = targetPanel.querySelectorAll('.sub-tab');
+        var subPanels = targetPanel.querySelectorAll('.sub-panel');
+        subTabs.forEach(function(st, i) {
+          st.classList.toggle('active', i === 0);
+        });
+        subPanels.forEach(function(sp, i) {
+          sp.classList.toggle('active', i === 0);
+        });
+      }
+    });
+  });
+
+  // Sub-tabs (delegation)
+  document.addEventListener('click', function(e) {
+    if (!e.target.classList.contains('sub-tab')) return;
+    var subtabId = e.target.getAttribute('data-subtab');
+    var panel = e.target.closest('.week-panel');
+    if (!panel) return;
+
+    // Update sub-tab active states
+    panel.querySelectorAll('.sub-tab').forEach(function(st) { st.classList.remove('active'); });
+    e.target.classList.add('active');
+
+    // Update sub-panel visibility
+    panel.querySelectorAll('.sub-panel').forEach(function(sp) { sp.classList.remove('active'); });
+    var targetSubPanel = panel.querySelector('[data-subpanel="' + subtabId + '"]');
+    if (targetSubPanel) {
+      targetSubPanel.classList.add('active');
+
+      // Re-render mermaid if showing Week 1 project
+      if (subtabId === 'w1-project') {
+        setTimeout(function() {
+          // Re-process mermaid diagrams that may not have rendered
+          var mermaidEls = targetSubPanel.querySelectorAll('.mermaid[data-processed]');
+          if (mermaidEls.length === 0) {
+            // Not yet processed, run mermaid
+            mermaid.run({ querySelector: '[data-subpanel="w1-project"] .mermaid' });
+          }
+        }, 100);
+      }
+    }
+  });
 })();
 </script>
 </body>
