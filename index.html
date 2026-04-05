@@ -797,7 +797,7 @@ stateDiagram-v2
 
 <script>
 mermaid.initialize({
-  startOnLoad: true,
+  startOnLoad: false,
   theme: 'dark',
   themeVariables: {
     primaryColor: '#21262d', primaryTextColor: '#e6edf3', primaryBorderColor: '#30363d',
@@ -934,6 +934,31 @@ mermaid.initialize({
     });
   });
 
+  // Track initialization state
+  var mermaidRendered = false;
+  var d3Initialized = true; // D3 already runs above
+
+  function renderMermaidDiagrams() {
+    if (mermaidRendered) return;
+    var panel = document.querySelector('[data-subpanel="w1-project"]');
+    if (!panel) return;
+    // Reset any failed renders - remove data-processed and error containers
+    panel.querySelectorAll('.mermaid').forEach(function(el) {
+      if (el.getAttribute('data-processed')) {
+        el.removeAttribute('data-processed');
+      }
+      // If mermaid replaced content with error SVG, restore original
+      if (el.dataset.original) {
+        el.innerHTML = el.dataset.original;
+      }
+    });
+    mermaid.run({ nodes: panel.querySelectorAll('.mermaid') }).then(function() {
+      mermaidRendered = true;
+    }).catch(function(err) {
+      console.warn('Mermaid render error:', err);
+    });
+  }
+
   // Sub-tabs (delegation)
   document.addEventListener('click', function(e) {
     if (!e.target.classList.contains('sub-tab')) return;
@@ -951,18 +976,29 @@ mermaid.initialize({
     if (targetSubPanel) {
       targetSubPanel.classList.add('active');
 
-      // Re-render mermaid if showing Week 1 project
+      // Render mermaid diagrams when Week 1 project tab is first shown
       if (subtabId === 'w1-project') {
-        setTimeout(function() {
-          // Re-process mermaid diagrams that may not have rendered
-          var mermaidEls = targetSubPanel.querySelectorAll('.mermaid[data-processed]');
-          if (mermaidEls.length === 0) {
-            // Not yet processed, run mermaid
-            mermaid.run({ querySelector: '[data-subpanel="w1-project"] .mermaid' });
-          }
-        }, 100);
+        setTimeout(renderMermaidDiagrams, 150);
       }
     }
+  });
+
+  // Also handle week tab clicks — if switching TO week 1 and project tab is active, render
+  document.querySelectorAll('.week-tab').forEach(function(tab) {
+    tab.addEventListener('click', function() {
+      var week = this.getAttribute('data-week');
+      if (week === '1') {
+        var projectTab = document.querySelector('[data-subpanel="w1-project"]');
+        if (projectTab && projectTab.classList.contains('active')) {
+          setTimeout(renderMermaidDiagrams, 150);
+        }
+      }
+    });
+  });
+
+  // Store original mermaid source before any processing attempts
+  document.querySelectorAll('[data-subpanel="w1-project"] .mermaid').forEach(function(el) {
+    el.dataset.original = el.innerHTML;
   });
 })();
 </script>
