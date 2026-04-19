@@ -2,7 +2,6 @@
 [![Program Duration](https://img.shields.io/badge/Duration-7_Weeks-2ea44f?style=for-the-badge)]()
 [![Mini Assignments](https://img.shields.io/badge/Mini_Assignments-5-blue?style=for-the-badge)]()
 [![Projects](https://img.shields.io/badge/Projects-10+-orange?style=for-the-badge)]()
-[![Platform](https://img.shields.io/badge/Platform-Analytics_Vidhya-FF6F00?style=for-the-badge)]()
 
 ---
 
