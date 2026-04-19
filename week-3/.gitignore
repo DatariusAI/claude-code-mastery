@@ -14,3 +14,6 @@ sample-target/vitest.config.ts
 sample-target/tests/
 # But track the curated demo test file
 !sample-target/tests/shorten.test.ts
+
+# Build artifacts (PDF generator script, intermediate markdown)
+.build/
