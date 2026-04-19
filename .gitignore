@@ -2,6 +2,32 @@ node_modules/
 dist/
 .env
 .env.*
+!.env.example
 .claude/
 *.log
 docs/exploration-log.md
+
+# Security baseline
+*.pem
+*.key
+id_rsa*
+credentials.json
+secrets.yaml
+*.sqlite
+*.db
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Test coverage
+coverage/
