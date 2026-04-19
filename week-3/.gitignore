@@ -7,3 +7,10 @@ sample-target/src/
 sample-target/node_modules/
 sample-target/dist/
 sample-target/.env
+sample-target/package.json
+sample-target/package-lock.json
+sample-target/tsconfig.json
+sample-target/vitest.config.ts
+sample-target/tests/
+# But track the curated demo test file
+!sample-target/tests/shorten.test.ts

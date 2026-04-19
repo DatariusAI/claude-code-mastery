@@ -1,3 +1,73 @@
 {
-  "_comment": "TODO: Session B — configure hooks, allowlists, denylists, permission mode, cost limits"
+  "_documentation": {
+    "settings_hierarchy": [
+      "Enterprise — organization-wide policies (managed by admins, cannot be overridden)",
+      "Project — .claude/settings.json checked into the repo (this file)",
+      "User — ~/.claude/settings.json (personal preferences)",
+      "Local — .claude/settings.local.json (gitignored, machine-specific)"
+    ],
+    "why_project_tier": "This settings file lives at the Project tier because governance hooks and permission rules should be shared across all developers working on this repo. They are version-controlled, peer-reviewed, and consistent for every team member. Enterprise tier would be appropriate for org-wide policies; User/Local tiers are for personal preferences that don't affect safety."
+  },
+  "permissions": {
+    "allow": [
+      "Read",
+      "Edit",
+      "Glob",
+      "Grep",
+      "Bash(npm test)",
+      "Bash(npx vitest*)",
+      "Bash(git status)",
+      "Bash(git diff*)",
+      "Bash(git log*)",
+      "Bash(gh pr*)"
+    ],
+    "deny": [
+      "Bash(rm *)",
+      "Bash(git push --force*)",
+      "Bash(git reset --hard*)",
+      "Bash(docker*)",
+      "Bash(curl*|bash)",
+      "Bash(chmod 777*)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hook": "python3 week-3/.claude/hooks/validate-bash.py",
+        "description": "Block dangerous bash commands (rm -rf, DROP TABLE, git push --force, etc.)"
+      },
+      {
+        "matcher": "Edit|Write",
+        "hook": "python3 week-3/.claude/hooks/check-secrets.py",
+        "description": "Scan file edits/writes for leaked API keys, passwords, tokens, and private keys"
+      },
+      {
+        "matcher": "Edit|Write",
+        "hook": "bash week-3/.claude/hooks/scope-guard.sh",
+        "description": "Enforce file scope — only allow edits to approved paths, block frozen weeks and sensitive files"
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "*",
+        "hook": "bash week-3/.claude/hooks/audit-log.sh",
+        "description": "Log every tool action to audit.jsonl with timestamp, user, branch, tool, input, result"
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "matcher": "*",
+        "hook": "bash week-3/.claude/hooks/prompt-log.sh",
+        "description": "Log all user prompts to prompts.jsonl for compliance and session review"
+      }
+    ],
+    "Stop": [
+      {
+        "matcher": "*",
+        "hook": "bash week-3/.claude/hooks/session-summary.sh",
+        "description": "Generate session summary (files modified, blocks triggered, tokens used, estimated cost)"
+      }
+    ]
+  }
 }
