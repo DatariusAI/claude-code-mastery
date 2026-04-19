@@ -1,0 +1,9 @@
+# Override root .gitignore: track .claude/ for this project
+# (slash commands, hooks, settings, and audit samples are deliverables)
+!.claude/
+
+# Ignore copied source files in sample-target (only curated demos committed)
+sample-target/src/
+sample-target/node_modules/
+sample-target/dist/
+sample-target/.env

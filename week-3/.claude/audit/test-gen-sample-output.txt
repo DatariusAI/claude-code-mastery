@@ -1,0 +1,2 @@
+# /test-gen Sample Output
+# TODO: Session C — capture real output from running /test-gen against sample-target/

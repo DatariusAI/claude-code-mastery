@@ -186,7 +186,7 @@
 <div class="week-tabs" role="tablist">
   <button class="week-tab active" data-week="1" role="tab"><span class="status-dot complete"></span>W 01 &middot; Foundations</button>
   <button class="week-tab" data-week="2" role="tab"><span class="status-dot in-progress"></span>W 02 &middot; Prompt Eng.</button>
-  <button class="week-tab" data-week="3" role="tab"><span class="status-dot upcoming"></span>W 03 &middot; Automation</button>
+  <button class="week-tab" data-week="3" role="tab"><span class="status-dot in-progress"></span>W 03 &middot; SDLC &amp; Gov</button>
   <button class="week-tab" data-week="4" role="tab"><span class="status-dot upcoming"></span>W 04 &middot; Scale</button>
   <button class="week-tab" data-week="5" role="tab"><span class="status-dot upcoming"></span>W 05 &middot; Multi-Agent</button>
   <button class="week-tab" data-week="6" role="tab"><span class="status-dot upcoming"></span>W 06 &middot; CI/CD</button>
@@ -726,42 +726,111 @@ stateDiagram-v2
 <div class="week-panel" data-week-panel="3">
   <div class="sub-tabs">
     <button class="sub-tab active" data-subtab="w3-overview">Week Overview</button>
-    <button class="sub-tab" data-subtab="w3-project">Mini Project &mdash; MCP Toolkit</button>
+    <button class="sub-tab" data-subtab="w3-project">Mini Project &mdash; Governed AI Pipeline</button>
   </div>
   <div class="sub-panel active" data-subpanel="w3-overview">
     <div class="week-overview-container">
-      <h2><span>Week 3</span> &mdash; Automation</h2>
-      <p class="week-overview-desc">MCP servers, skills, and plugin development for Claude Code automation.</p>
+      <h2><span>Week 3</span> &mdash; AI-Augmented SDLC &amp; Governance</h2>
+      <p class="week-overview-desc">Building a governed AI-augmented development pipeline: slash commands, governance hooks, audit logging, and measured ROI.</p>
+
       <div class="session-card">
         <div class="session-num">Session 5</div>
-        <h3>MCP Servers in Enterprise</h3>
-        <p class="session-date">12 April 2025</p>
+        <h3>AI-Augmented SDLC</h3>
+        <p class="session-date">12 April 2026</p>
         <ul>
-          <li>Model Context Protocol (MCP) architecture</li>
-          <li>Building custom MCP servers</li>
-          <li>Enterprise integration patterns</li>
-          <li>Security considerations for MCP</li>
+          <li>Workflow mapping with Mermaid flowcharts</li>
+          <li>Automation Leverage Framework scoring</li>
+          <li>Custom slash commands and /ship pipelines</li>
+          <li>CLAUDE.md as team conventions contract</li>
         </ul>
       </div>
+
       <div class="session-card">
         <div class="session-num">Session 6</div>
-        <h3>Skills &amp; Plugins</h3>
-        <p class="session-date">18 April 2025</p>
+        <h3>Hooks, Governance &amp; Logging</h3>
+        <p class="session-date">18 April 2026</p>
         <ul>
-          <li>Creating custom skills for Claude Code</li>
-          <li>Plugin architecture and development</li>
-          <li>Sharing and distributing skills</li>
-          <li>Automation workflow design</li>
+          <li>PreToolUse hooks for bash, secrets, file scope</li>
+          <li>PostToolUse audit logging to JSONL</li>
+          <li>UserPromptSubmit and Stop hooks</li>
+          <li>Permission modes and settings.json hierarchy</li>
         </ul>
       </div>
     </div>
   </div>
   <div class="sub-panel" data-subpanel="w3-project">
-    <div class="coming-soon">
-      <div class="coming-soon-icon">&#9881;</div>
-      <h3>Coming Soon</h3>
-      <p>The MCP Toolkit mini project will be available when Week 3 begins on April 12.</p>
-    </div>
+
+    <!-- W3 Hero -->
+    <header class="hero">
+      <h1>The Governed AI Pipeline</h1>
+      <p>A drop-in .claude/ governance layer with measured ROI</p>
+      <div class="badge">5 slash commands &bull; 6 hooks &bull; 4-part pipeline &bull; 10-person team ROI</div>
+    </header>
+
+    <!-- Part summary cards -->
+    <section>
+      <h2><span>#1</span> Project Overview</h2>
+      <p class="section-desc">Four-part governance pipeline: workflow analysis &rarr; slash commands &rarr; safety hooks &rarr; measured ROI.</p>
+      <div class="parts-grid">
+        <div class="part-card">
+          <div class="part-num">Part 1</div>
+          <h3>Workflow Mapping</h3>
+          <ul>
+            <li>Mermaid flowchart of ticket-to-deploy lifecycle</li>
+            <li>12-step annotations with time, tools, and pain points</li>
+            <li>Automation Leverage Framework with ROI scoring</li>
+          </ul>
+        </div>
+        <div class="part-card">
+          <div class="part-num">Part 2</div>
+          <h3>Slash Command Pipeline</h3>
+          <ul>
+            <li>5 custom commands: /review, /test-gen, /commit, /ship, /onboard</li>
+            <li>/ship chains the full pipeline into a single invocation</li>
+            <li>PR creation via gh CLI with structured templates</li>
+          </ul>
+        </div>
+        <div class="part-card">
+          <div class="part-num">Part 3</div>
+          <h3>Governance &amp; Safety</h3>
+          <ul>
+            <li>3 PreToolUse hooks: bash validator, secret scanner, scope guard</li>
+            <li>PostToolUse audit logging to JSONL</li>
+            <li>Prompt logging, session summaries, cost tracking</li>
+          </ul>
+        </div>
+        <div class="part-card">
+          <div class="part-num">Part 4</div>
+          <h3>Measurement &amp; ROI</h3>
+          <ul>
+            <li>Baseline manual workflow vs /ship pipeline comparison</li>
+            <li>Before/after metrics with real task (REQ-SHORT-006)</li>
+            <li>Annual savings projection for 10-person team at $150/hr</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="deliverables-section">
+        <h2><span>Deliverables</span> Checklist</h2>
+        <ul class="checklist">
+          <li><span class="check-icon" style="color:#484f58;">&#9744;</span> .claude/commands/ &mdash; 5 slash commands</li>
+          <li><span class="check-icon" style="color:#484f58;">&#9744;</span> .claude/hooks/ &mdash; 6 hooks (3 validation + 3 logging)</li>
+          <li><span class="check-icon" style="color:#484f58;">&#9744;</span> .claude/settings.json &mdash; permissions, hooks, cost limits</li>
+          <li><span class="check-icon" style="color:#484f58;">&#9744;</span> .claude/audit/ &mdash; sample logs with 3 blocks + coverage</li>
+          <li><span class="check-icon" style="color:#484f58;">&#9744;</span> CLAUDE.md &mdash; workflow rules, conventions, cost policy</li>
+          <li><span class="check-icon" style="color:#484f58;">&#9744;</span> docs/workflow-map.md &mdash; Mermaid + annotations</li>
+          <li><span class="check-icon" style="color:#484f58;">&#9744;</span> docs/leverage-analysis.md &mdash; scoring + top 3 targets</li>
+          <li><span class="check-icon" style="color:#484f58;">&#9744;</span> docs/roi-report.md &mdash; before/after + annual projection</li>
+          <li><span class="check-icon" style="color:#484f58;">&#9744;</span> docs/governance-playbook.md &mdash; 6-week rollout</li>
+          <li><span class="check-icon" style="color:#484f58;">&#9744;</span> REPORT.md &mdash; answers to all 12 rubric questions</li>
+        </ul>
+      </div>
+
+      <div class="repo-link-section">
+        <p style="color:#484f58; font-size:0.9rem;">Repository link will appear upon submission.</p>
+      </div>
+    </section>
+
   </div>
 </div>
 
