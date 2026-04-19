@@ -760,8 +760,19 @@ stateDiagram-v2
   </div>
   <div class="sub-panel" data-subpanel="w3-project">
 
+    <!-- Local nav (matching Week 2 mini-project-nav pattern) -->
+    <div class="mini-project-nav">
+      <ul>
+        <li><a href="#w3p-overview">Overview</a></li>
+        <li><a href="#w3p-pipeline">Pipeline Flow</a></li>
+        <li><a href="#w3p-hooks">Hook Lifecycle</a></li>
+        <li><a href="#w3p-settings">Settings Hierarchy</a></li>
+        <li><a href="#w3p-audit">Audit Data Flow</a></li>
+      </ul>
+    </div>
+
     <!-- W3 Hero -->
-    <header class="hero">
+    <header class="hero" id="w3p-overview">
       <h1>The Governed AI Pipeline</h1>
       <p>A drop-in .claude/ governance layer with measured ROI</p>
       <div class="badge">5 slash commands &bull; 6 hooks &bull; 4-part pipeline &bull; 10-person team ROI</div>
@@ -828,6 +839,157 @@ stateDiagram-v2
 
       <div class="repo-link-section">
         <a href="https://github.com/DatariusAI/claude-code-mastery" target="_blank">View on GitHub &rarr;</a>
+      </div>
+    </section>
+
+    <!-- W3 /ship Pipeline Flow -->
+    <section id="w3p-pipeline">
+      <h2><span>#2</span> /ship Pipeline Flow</h2>
+      <p class="section-desc">Four-stage pipeline with hard gates &mdash; any stage failure aborts the entire run.</p>
+      <div class="mermaid-container">
+        <pre class="mermaid">
+flowchart LR
+    subgraph invoke["Developer invokes /ship"]
+        A["Stage 1\n/review"]
+    end
+
+    A -->|PASS| B["Stage 2\n/test-gen"]
+    A -->|"FAIL\n(error findings)"| X1["Pipeline\nAborted"]
+
+    B -->|PASS| C["Stage 3\n/commit"]
+    B -->|"FAIL\n(tests fail)"| X2["Pipeline\nAborted"]
+
+    C -->|SUCCESS| D["Stage 4\ngh pr create"]
+    C -->|"FAIL\n(hook block)"| X3["Pipeline\nAborted"]
+
+    D --> E["PR Created\nwith review findings\n+ coverage data\n+ governance metadata"]
+
+    style A fill:#58a6ff,color:#fff,stroke:#1f6feb
+    style B fill:#bc8cff,color:#fff,stroke:#8b5cf6
+    style C fill:#f778ba,color:#fff,stroke:#db61a2
+    style D fill:#3fb950,color:#fff,stroke:#238636
+    style E fill:#238636,color:#fff,stroke:#196c2e
+    style X1 fill:#da3633,color:#fff,stroke:#b62324
+    style X2 fill:#da3633,color:#fff,stroke:#b62324
+    style X3 fill:#da3633,color:#fff,stroke:#b62324
+        </pre>
+      </div>
+    </section>
+
+    <!-- W3 Hook Lifecycle -->
+    <section id="w3p-hooks">
+      <h2><span>#3</span> Hook Lifecycle</h2>
+      <p class="section-desc">PreToolUse hooks run before execution (prevention), PostToolUse hooks run after (logging).</p>
+      <div class="mermaid-container">
+        <pre class="mermaid">
+sequenceDiagram
+    participant Dev as Developer
+    participant CC as Claude Code
+    participant Pre as PreToolUse Hooks
+    participant Tool as Tool Execution
+    participant Post as PostToolUse Hooks
+    participant Audit as Audit Logs
+
+    Dev->>CC: Prompt (e.g. "delete /tmp/test")
+
+    rect rgb(22, 27, 34)
+    Note over CC,Pre: PreToolUse Phase
+    CC->>Pre: validate-bash.py
+    alt Command is dangerous
+        Pre-->>CC: exit 1 + stderr BLOCKED
+        Pre->>Audit: Append to blocked.log
+        CC-->>Dev: BLOCKED: rm -rf
+    else Command is safe
+        Pre-->>CC: exit 0 (allow)
+    end
+    end
+
+    rect rgb(22, 27, 34)
+    Note over CC,Tool: Tool Execution
+    CC->>Tool: Execute command
+    Tool-->>CC: Result
+    end
+
+    rect rgb(22, 27, 34)
+    Note over CC,Post: PostToolUse Phase
+    CC->>Post: audit-log.sh
+    Post->>Audit: Append JSONL to audit.jsonl
+    Post-->>CC: exit 0
+    end
+
+    CC-->>Dev: Result
+        </pre>
+      </div>
+    </section>
+
+    <!-- W3 Settings Hierarchy -->
+    <section id="w3p-settings">
+      <h2><span>#4</span> Settings Hierarchy</h2>
+      <p class="section-desc">Four-tier override chain &mdash; Enterprise policies cannot be weakened by lower tiers.</p>
+      <div class="mermaid-container">
+        <pre class="mermaid">
+flowchart TD
+    E["Enterprise\nsettings.json\n(org-wide, admin-managed)"]
+    P["Project\n.claude/settings.json\n(checked into repo)"]
+    U["User\n~/.claude/settings.json\n(personal preferences)"]
+    L["Local\n.claude/settings.local.json\n(gitignored)"]
+
+    E -->|overrides| P
+    P -->|overrides| U
+    U -->|overrides| L
+
+    style E fill:#da3633,color:#fff,stroke:#b62324
+    style P fill:#58a6ff,color:#fff,stroke:#1f6feb
+    style U fill:#bc8cff,color:#fff,stroke:#8b5cf6
+    style L fill:#484f58,color:#fff,stroke:#30363d
+        </pre>
+      </div>
+    </section>
+
+    <!-- W3 Audit Data Flow -->
+    <section id="w3p-audit">
+      <h2><span>#5</span> Audit Data Flow</h2>
+      <p class="section-desc">Every action flows through hooks into JSONL logs, queryable with jq for compliance.</p>
+      <div class="mermaid-container">
+        <pre class="mermaid">
+flowchart LR
+    A1["Tool Actions\n(Bash, Edit, Write)"]
+    A2["User Prompts"]
+    A3["Session End"]
+    A4["Blocked Actions"]
+
+    H1["audit-log.sh"]
+    H2["prompt-log.sh"]
+    H3["session-summary.sh"]
+    H4["PreToolUse hooks"]
+
+    S1["audit.jsonl"]
+    S2["prompts.jsonl"]
+    S3["costs.jsonl"]
+    S4["blocked.log"]
+
+    R["Compliance Report"]
+
+    A1 --> H1 --> S1
+    A2 --> H2 --> S2
+    A3 --> H3 --> S3
+    A4 --> H4 --> S4
+
+    S1 --> R
+    S2 --> R
+    S3 --> R
+    S4 --> R
+
+    style A1 fill:#58a6ff,color:#fff,stroke:#1f6feb
+    style A2 fill:#bc8cff,color:#fff,stroke:#8b5cf6
+    style A3 fill:#f778ba,color:#fff,stroke:#db61a2
+    style A4 fill:#da3633,color:#fff,stroke:#b62324
+    style S1 fill:#161b22,color:#e6edf3,stroke:#30363d
+    style S2 fill:#161b22,color:#e6edf3,stroke:#30363d
+    style S3 fill:#161b22,color:#e6edf3,stroke:#30363d
+    style S4 fill:#161b22,color:#e6edf3,stroke:#30363d
+    style R fill:#3fb950,color:#fff,stroke:#238636
+        </pre>
       </div>
     </section>
 
@@ -1152,6 +1314,7 @@ mermaid.initialize({
   // Track initialization state per week
   var mermaidRenderedW1 = false;
   var mermaidRenderedW2 = false;
+  var mermaidRenderedW3 = false;
   var d3Initialized = true; // D3 already runs above
 
   function renderMermaidForPanel(panelSelector, flagName) {
@@ -1168,6 +1331,7 @@ mermaid.initialize({
     mermaid.run({ nodes: panel.querySelectorAll('.mermaid') }).then(function() {
       if (flagName === 'w1') mermaidRenderedW1 = true;
       if (flagName === 'w2') mermaidRenderedW2 = true;
+      if (flagName === 'w3') mermaidRenderedW3 = true;
     }).catch(function(err) {
       console.warn('Mermaid render error:', err);
     });
@@ -1181,6 +1345,11 @@ mermaid.initialize({
   function renderMermaidW2() {
     if (mermaidRenderedW2) return;
     renderMermaidForPanel('[data-subpanel="w2-project"]', 'w2');
+  }
+
+  function renderMermaidW3() {
+    if (mermaidRenderedW3) return;
+    renderMermaidForPanel('[data-subpanel="w3-project"]', 'w3');
   }
 
   // Sub-tabs (delegation)
@@ -1207,6 +1376,9 @@ mermaid.initialize({
       if (subtabId === 'w2-project') {
         setTimeout(renderMermaidW2, 150);
       }
+      if (subtabId === 'w3-project') {
+        setTimeout(renderMermaidW3, 150);
+      }
     }
   });
 
@@ -1226,6 +1398,12 @@ mermaid.initialize({
           setTimeout(renderMermaidW2, 150);
         }
       }
+      if (week === '3') {
+        var projectTab3 = document.querySelector('[data-subpanel="w3-project"]');
+        if (projectTab3 && projectTab3.classList.contains('active')) {
+          setTimeout(renderMermaidW3, 150);
+        }
+      }
     });
   });
 
@@ -1234,6 +1412,9 @@ mermaid.initialize({
     el.dataset.original = el.innerHTML;
   });
   document.querySelectorAll('[data-subpanel="w2-project"] .mermaid').forEach(function(el) {
+    el.dataset.original = el.innerHTML;
+  });
+  document.querySelectorAll('[data-subpanel="w3-project"] .mermaid').forEach(function(el) {
     el.dataset.original = el.innerHTML;
   });
 })();
