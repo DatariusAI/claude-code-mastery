@@ -1034,6 +1034,18 @@ flowchart LR
   </div>
   <div class="sub-panel" data-subpanel="w4-project">
 
+    <!-- Local nav (matching Week 3 mini-project-nav pattern) -->
+    <div class="mini-project-nav">
+      <ul>
+        <li><a href="#w4p-overview">Overview</a></li>
+        <li><a href="#w4p-architecture">Architecture</a></li>
+        <li><a href="#w4p-morning-brief">Morning Brief (WF-01)</a></li>
+        <li><a href="#w4p-incident-triage">Incident Triage (WF-02)</a></li>
+        <li><a href="#w4p-audit">Audit Lifecycle</a></li>
+        <li><a href="#w4p-registry">Permission Tiers</a></li>
+      </ul>
+    </div>
+
     <header class="hero" id="w4p-overview">
       <h1>MCP Engineering Intelligence Platform</h1>
       <p>Claude Code wired to live business data via MCP &mdash; answers ops questions in under 60 seconds</p>
@@ -1109,6 +1121,210 @@ flowchart LR
 
       <div class="repo-link-section">
         <a href="https://github.com/DatariusAI/claude-code-mastery" target="_blank">View on GitHub &rarr;</a>
+      </div>
+    </section>
+
+    <!-- W4 Architecture Overview -->
+    <section id="w4p-architecture">
+      <h2><span>#2</span> Architecture Overview</h2>
+      <p class="section-desc">CLI &rarr; <code>BaseWorkflow.run</code> &rarr; the two workflows &rarr; tool wrappers &rarr; <code>MCPClient</code>. Every tool call is timed and audit-logged before returning to the workflow.</p>
+      <div class="mermaid-container">
+        <pre class="mermaid">
+flowchart TD
+    CLI["main.py CLI<br/>--workflow ..."] --> BW[BaseWorkflow.run]
+    BW --> WF1["MorningBriefWorkflow<br/>WF-01"]
+    BW --> WF2["IncidentTriageWorkflow<br/>WF-02"]
+
+    WF1 --> GT[github_tools wrappers]
+    WF1 --> DT["db_tools<br/>(lab stub)"]
+    WF2 --> GT
+    WF2 --> DT
+
+    GT -->|mcp.call| MCP[MCPClient]
+    MCP -->|mcp_servers| GH[(GitHub MCP)]
+    MCP -->|mcp_servers| PG[(PostgreSQL MCP)]
+
+    GT --> AL[AuditLogger]
+    AL --> LOG[("~/.fintrack/audit.log<br/>JSONL")]
+
+    style CLI fill:#58a6ff,color:#fff,stroke:#1f6feb
+    style BW fill:#bc8cff,color:#fff,stroke:#8b5cf6
+    style WF1 fill:#f778ba,color:#fff,stroke:#db61a2
+    style WF2 fill:#f778ba,color:#fff,stroke:#db61a2
+    style GT fill:#3fb950,color:#fff,stroke:#238636
+    style DT fill:#484f58,color:#fff,stroke:#30363d
+    style MCP fill:#bc8cff,color:#fff,stroke:#8b5cf6
+    style GH fill:#161b22,color:#e6edf3,stroke:#30363d
+    style PG fill:#161b22,color:#e6edf3,stroke:#30363d
+    style AL fill:#238636,color:#fff,stroke:#196c2e
+    style LOG fill:#161b22,color:#e6edf3,stroke:#30363d
+        </pre>
+      </div>
+    </section>
+
+    <!-- W4 WF-01 Morning Brief Sequence -->
+    <section id="w4p-morning-brief">
+      <h2><span>#3</span> WF-01 Morning Brief &mdash; Call Sequence</h2>
+      <p class="section-desc">Three MCP calls chained, each audit-logged, then Claude synthesises a four-section markdown report. Empty data sources fall through to "No data returned from &lt;source&gt;".</p>
+      <div class="mermaid-container">
+        <pre class="mermaid">
+sequenceDiagram
+    participant Eng as Engineer
+    participant CLI as main.py
+    participant WF as MorningBriefWorkflow
+    participant GT as github_tools
+    participant DT as db_tools
+    participant MCP as MCPClient
+    participant GH as GitHub MCP
+    participant AL as AuditLogger
+    participant Claude as Claude (mcp.ask)
+
+    Eng->>CLI: --workflow morning-brief
+    CLI->>WF: execute()
+
+    rect rgb(22, 27, 34)
+    Note over WF,AL: Tool call 1 of 3
+    WF->>GT: get_open_prs(repo)
+    GT->>MCP: mcp.call("github_pull_requests")
+    MCP->>GH: tool call
+    GH-->>MCP: PRs JSON
+    MCP-->>GT: result
+    GT->>AL: log(success, duration_ms)
+    GT-->>WF: filtered PRs
+    end
+
+    rect rgb(22, 27, 34)
+    Note over WF,AL: Tool call 2 of 3
+    WF->>GT: get_priority_issues(repo)
+    GT->>MCP: mcp.call("github_issues")
+    MCP->>GH: tool call
+    GH-->>MCP: issues JSON
+    MCP-->>GT: result
+    GT->>AL: log(success, duration_ms)
+    GT-->>WF: P0/P1 issues
+    end
+
+    rect rgb(22, 27, 34)
+    Note over WF,AL: Tool call 3 of 3
+    WF->>DT: get_overnight_alerts()
+    DT-->>WF: alerts list
+    end
+
+    WF->>Claude: ask(prompt + 3 data sets)
+    Claude-->>WF: 4-section markdown
+    WF-->>CLI: result
+    CLI-->>Eng: morning brief
+        </pre>
+      </div>
+    </section>
+
+    <!-- W4 WF-02 Incident Triage Sequence -->
+    <section id="w4p-incident-triage">
+      <h2><span>#4</span> WF-02 Incident Triage &mdash; Call Sequence + Degraded Fallback</h2>
+      <p class="section-desc">Four MCP calls in their own try/except so one failure cannot abort the workflow. Strict JSON parsing on Claude's response with a seven-key schema check; any parse or schema failure returns <code>ESCALATE_FALLBACK</code>.</p>
+      <div class="mermaid-container">
+        <pre class="mermaid">
+sequenceDiagram
+    participant Eng as On-call
+    participant WF as IncidentTriageWorkflow
+    participant DT as db_tools
+    participant GT as github_tools
+    participant Claude as Claude
+
+    Eng->>WF: execute(service="payments")
+
+    rect rgb(22, 27, 34)
+    Note over WF,GT: Per-call try/except &mdash; graceful degradation
+    WF->>DT: get_error_rate(window=30)
+    DT-->>WF: 30-min baseline (or {} on error)
+    WF->>GT: search_recent_commits(hours=4)
+    GT-->>WF: commits (or [] on error)
+    WF->>GT: get_priority_issues(labels=["bug",svc])
+    GT-->>WF: bugs (or [] on error)
+    WF->>DT: get_error_rate(window=5)
+    DT-->>WF: 5-min snapshot (or {} on error)
+    end
+
+    WF->>Claude: ask(prompt with 5 placeholders)
+    Claude-->>WF: response (raw)
+
+    alt Valid JSON + 7 required keys present
+        WF-->>Eng: IncidentReport with escalate flag
+    else Invalid JSON or missing key
+        WF-->>Eng: ESCALATE_FALLBACK (escalate=true)
+    end
+        </pre>
+      </div>
+    </section>
+
+    <!-- W4 Audit Log Lifecycle -->
+    <section id="w4p-audit">
+      <h2><span>#5</span> Audit Log Lifecycle</h2>
+      <p class="section-desc">Per-call timing, SHA-256 input hashing, append-only JSONL, never raises. Six fields per entry: <code>timestamp</code>, <code>workflow</code>, <code>tool</code>, <code>input_hash</code>, <code>status</code>, <code>duration_ms</code>.</p>
+      <div class="mermaid-container">
+        <pre class="mermaid">
+flowchart LR
+    A["github_tools call<br/>e.g. get_open_prs()"]
+    A --> S["start =<br/>perf_counter()"]
+    S --> CALL["mcp.call(tool, input)"]
+    CALL -->|success| H1["SHA-256 of<br/>sorted-key JSON input"]
+    CALL -->|exception| H2["SHA-256 of input<br/>(same hashing)"]
+    H1 --> E1["Build entry<br/>status=success"]
+    H2 --> E2["Build entry<br/>status=error"]
+    E1 --> WRITE["Append JSONL line<br/>~/.fintrack/audit.log"]
+    E2 --> WRITE
+    WRITE -->|OK| OUT["return result / []"]
+    WRITE -->|OSError, ValueError, TypeError| STDERR["print warning<br/>to stderr<br/>NEVER raise"]
+    STDERR --> OUT
+
+    style A fill:#58a6ff,color:#fff,stroke:#1f6feb
+    style S fill:#484f58,color:#fff,stroke:#30363d
+    style CALL fill:#bc8cff,color:#fff,stroke:#8b5cf6
+    style H1 fill:#3fb950,color:#fff,stroke:#238636
+    style H2 fill:#da3633,color:#fff,stroke:#b62324
+    style E1 fill:#3fb950,color:#fff,stroke:#238636
+    style E2 fill:#da3633,color:#fff,stroke:#b62324
+    style WRITE fill:#238636,color:#fff,stroke:#196c2e
+    style STDERR fill:#da3633,color:#fff,stroke:#b62324
+    style OUT fill:#161b22,color:#e6edf3,stroke:#30363d
+        </pre>
+      </div>
+    </section>
+
+    <!-- W4 Permission Tiers / Server Registry -->
+    <section id="w4p-registry">
+      <h2><span>#6</span> MCP Server Registry &amp; Permission Tiers</h2>
+      <p class="section-desc">Read-only is the default tier. Write access requires a separate registry entry, manager sign-off, and elevated audit retention &mdash; per Architecture Rule 4 in <code>fintrack-mcp-intel/CLAUDE.md</code>.</p>
+      <div class="mermaid-container">
+        <pre class="mermaid">
+flowchart TD
+    REGISTRY["Approved Server Registry<br/>fintrack-mcp-intel/CLAUDE.md Section 2"]
+
+    subgraph readonly["READ-ONLY TIER (default)"]
+        GH["github-mcp<br/>issues:read &middot; pull_requests:read<br/>contents:read &middot; metadata:read"]
+        PG["pg-mcp<br/>role: readonly<br/>analytics replica"]
+        JIRA["jira-mcp (placeholder)<br/>issues:read &middot; sprints:read"]
+    end
+
+    subgraph writetier["WRITE TIER (gated)"]
+        SLACK["slack-mcp (placeholder)<br/>post to single channel only<br/>requires manager sign-off<br/>elevated audit retention"]
+    end
+
+    GATE{{"Architecture Rule 4<br/>read-only by default<br/>write requires sign-off"}}
+
+    REGISTRY --> readonly
+    REGISTRY --> writetier
+    writetier -.->|enforced by| GATE
+
+    style readonly fill:#0d1117,color:#e6edf3,stroke:#3fb950
+    style writetier fill:#0d1117,color:#e6edf3,stroke:#da3633
+    style GH fill:#3fb950,color:#fff,stroke:#238636
+    style PG fill:#3fb950,color:#fff,stroke:#238636
+    style JIRA fill:#484f58,color:#fff,stroke:#30363d
+    style SLACK fill:#da3633,color:#fff,stroke:#b62324
+    style REGISTRY fill:#58a6ff,color:#fff,stroke:#1f6feb
+    style GATE fill:#bc8cff,color:#fff,stroke:#8b5cf6
+        </pre>
       </div>
     </section>
 
@@ -1389,6 +1605,7 @@ mermaid.initialize({
   var mermaidRenderedW1 = false;
   var mermaidRenderedW2 = false;
   var mermaidRenderedW3 = false;
+  var mermaidRenderedW4 = false;
   var d3Initialized = true; // D3 already runs above
 
   function renderMermaidForPanel(panelSelector, flagName) {
@@ -1406,6 +1623,7 @@ mermaid.initialize({
       if (flagName === 'w1') mermaidRenderedW1 = true;
       if (flagName === 'w2') mermaidRenderedW2 = true;
       if (flagName === 'w3') mermaidRenderedW3 = true;
+      if (flagName === 'w4') mermaidRenderedW4 = true;
     }).catch(function(err) {
       console.warn('Mermaid render error:', err);
     });
@@ -1424,6 +1642,11 @@ mermaid.initialize({
   function renderMermaidW3() {
     if (mermaidRenderedW3) return;
     renderMermaidForPanel('[data-subpanel="w3-project"]', 'w3');
+  }
+
+  function renderMermaidW4() {
+    if (mermaidRenderedW4) return;
+    renderMermaidForPanel('[data-subpanel="w4-project"]', 'w4');
   }
 
   // Sub-tabs (delegation)
@@ -1453,6 +1676,9 @@ mermaid.initialize({
       if (subtabId === 'w3-project') {
         setTimeout(renderMermaidW3, 150);
       }
+      if (subtabId === 'w4-project') {
+        setTimeout(renderMermaidW4, 150);
+      }
     }
   });
 
@@ -1478,6 +1704,12 @@ mermaid.initialize({
           setTimeout(renderMermaidW3, 150);
         }
       }
+      if (week === '4') {
+        var projectTab4 = document.querySelector('[data-subpanel="w4-project"]');
+        if (projectTab4 && projectTab4.classList.contains('active')) {
+          setTimeout(renderMermaidW4, 150);
+        }
+      }
     });
   });
 
@@ -1489,6 +1721,9 @@ mermaid.initialize({
     el.dataset.original = el.innerHTML;
   });
   document.querySelectorAll('[data-subpanel="w3-project"] .mermaid').forEach(function(el) {
+    el.dataset.original = el.innerHTML;
+  });
+  document.querySelectorAll('[data-subpanel="w4-project"] .mermaid').forEach(function(el) {
     el.dataset.original = el.innerHTML;
   });
 })();
