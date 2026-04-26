@@ -187,7 +187,7 @@
   <button class="week-tab active" data-week="1" role="tab"><span class="status-dot complete"></span>W 01 &middot; Foundations</button>
   <button class="week-tab" data-week="2" role="tab"><span class="status-dot in-progress"></span>W 02 &middot; Prompt Eng.</button>
   <button class="week-tab" data-week="3" role="tab"><span class="status-dot complete"></span>W 03 &middot; SDLC &amp; Gov</button>
-  <button class="week-tab" data-week="4" role="tab"><span class="status-dot upcoming"></span>W 04 &middot; Scale</button>
+  <button class="week-tab" data-week="4" role="tab"><span class="status-dot in-progress"></span>W 04 &middot; MCP</button>
   <button class="week-tab" data-week="5" role="tab"><span class="status-dot upcoming"></span>W 05 &middot; Multi-Agent</button>
   <button class="week-tab" data-week="6" role="tab"><span class="status-dot upcoming"></span>W 06 &middot; CI/CD</button>
   <button class="week-tab" data-week="7" role="tab"><span class="status-dot upcoming"></span>W 07 &middot; Capstone</button>
@@ -1002,42 +1002,116 @@ flowchart LR
 <div class="week-panel" data-week-panel="4">
   <div class="sub-tabs">
     <button class="sub-tab active" data-subtab="w4-overview">Week Overview</button>
-    <button class="sub-tab" data-subtab="w4-project">Mini Project &mdash; Scale Challenge</button>
+    <button class="sub-tab" data-subtab="w4-project">Mini Project &mdash; MCP Engineering Intelligence</button>
   </div>
   <div class="sub-panel active" data-subpanel="w4-overview">
     <div class="week-overview-container">
-      <h2><span>Week 4</span> &mdash; Scale</h2>
-      <p class="week-overview-desc">Multi-agent architecture and strategies for large codebase management.</p>
+      <h2><span>Week 4</span> &mdash; MCP Engineering Intelligence</h2>
+      <p class="week-overview-desc">Connecting Claude Code to live business data via MCP &mdash; a real engineering operations tool with audit logging, governed tool calls, and chained workflows.</p>
       <div class="session-card">
         <div class="session-num">Session 7</div>
-        <h3>Subagents &amp; Multi-Agent Architecture</h3>
-        <p class="session-date">19 April 2025</p>
+        <h3>Building MCP Workflows</h3>
+        <p class="session-date">19 April 2026</p>
         <ul>
-          <li>Subagent patterns and orchestration</li>
-          <li>Multi-agent collaboration strategies</li>
-          <li>Task decomposition for agents</li>
-          <li>Error handling in multi-agent systems</li>
+          <li>MCP server connections (GitHub, PostgreSQL)</li>
+          <li>Audit logging architecture</li>
+          <li>Tool wrapper patterns and error handling</li>
+          <li>Morning Brief workflow (WF-01)</li>
         </ul>
       </div>
       <div class="session-card">
         <div class="session-num">Session 8</div>
-        <h3>Large Codebase Strategy &amp; Context Scaling</h3>
-        <p class="session-date">25 April 2025</p>
+        <h3>Chained MCP Workflows + Production Patterns</h3>
+        <p class="session-date">25 April 2026</p>
         <ul>
-          <li>Working with monorepos and large codebases</li>
-          <li>Context window optimization</li>
-          <li>Incremental analysis patterns</li>
-          <li>Scaling Claude Code for enterprise projects</li>
+          <li>Multi-tool sequential workflows</li>
+          <li>JSON schema enforcement on Claude output</li>
+          <li>Graceful degradation strategies</li>
+          <li>Incident Triage workflow (WF-02)</li>
         </ul>
       </div>
     </div>
   </div>
   <div class="sub-panel" data-subpanel="w4-project">
-    <div class="coming-soon">
-      <div class="coming-soon-icon">&#9881;</div>
-      <h3>Coming Soon</h3>
-      <p>The Scale Challenge mini project will be available when Week 4 begins on April 19.</p>
-    </div>
+
+    <header class="hero" id="w4p-overview">
+      <h1>MCP Engineering Intelligence Platform</h1>
+      <p>Claude Code wired to live business data via MCP &mdash; answers ops questions in under 60 seconds</p>
+      <div class="badge">4 MCP servers &bull; 2 workflows &bull; audit-logged &bull; 60-second answers</div>
+    </header>
+
+    <section>
+      <h2><span>#1</span> Project Overview</h2>
+      <p class="section-desc">Five-task build: an audit logger underpins typed GitHub MCP wrappers, two chained workflows, and the documentation/test layer that ties governance back to the code.</p>
+      <div class="parts-grid">
+        <div class="part-card">
+          <div class="part-num">Task 1</div>
+          <h3>Audit Logger</h3>
+          <ul>
+            <li>JSONL log with SHA-256-hashed inputs</li>
+            <li>6-field schema: timestamp, workflow, tool, input_hash, status, duration_ms</li>
+            <li>Never crashes the workflow &mdash; warn to stderr and continue</li>
+          </ul>
+        </div>
+        <div class="part-card">
+          <div class="part-num">Task 2</div>
+          <h3>GitHub MCP Tools</h3>
+          <ul>
+            <li>Three typed wrappers: PRs, issues, commits</li>
+            <li>Every call audit-logged with timing</li>
+            <li>Never raises &mdash; returns empty list on error</li>
+          </ul>
+        </div>
+        <div class="part-card">
+          <div class="part-num">Task 3</div>
+          <h3>Morning Brief (WF-01)</h3>
+          <ul>
+            <li>Daily standup digest chaining 3 MCP calls</li>
+            <li>Markdown with 4 fixed sections</li>
+            <li>Empty-source policy for missing data</li>
+          </ul>
+        </div>
+        <div class="part-card">
+          <div class="part-num">Task 4</div>
+          <h3>Incident Triage (WF-02)</h3>
+          <ul>
+            <li>Live-incident JSON triage chaining 4 MCP calls</li>
+            <li>Strict 7-key schema enforced on Claude output</li>
+            <li>Degraded-mode fallback when calls fail</li>
+          </ul>
+        </div>
+        <div class="part-card">
+          <div class="part-num">Task 5</div>
+          <h3>Documentation + Tests</h3>
+          <ul>
+            <li>CLAUDE.md (5 sections + 2 custom rules)</li>
+            <li>ANSWERS.md &mdash; 8 questions answered</li>
+            <li>3 mocked integration tests, governance mapping</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="deliverables-section">
+        <h2><span>Deliverables</span> Checklist</h2>
+        <ul class="checklist">
+          <li><span class="check-icon">&#10003;</span> fintrack-mcp-intel/ &mdash; Analytics Vidhya scaffold</li>
+          <li><span class="check-icon">&#10003;</span> mcp/audit.py &mdash; AuditLogger with JSONL + SHA-256</li>
+          <li><span class="check-icon">&#9744;</span> mcp/github_tools.py &mdash; 3 typed wrappers</li>
+          <li><span class="check-icon">&#9744;</span> workflows/morning_brief.py + prompt &mdash; 4-section output</li>
+          <li><span class="check-icon">&#9744;</span> workflows/incident_triage.py + prompt &mdash; strict JSON</li>
+          <li><span class="check-icon">&#9744;</span> CLAUDE.md &mdash; system docs (5 sections + 2 custom rules)</li>
+          <li><span class="check-icon">&#9744;</span> ANSWERS.md &mdash; 8 questions answered</li>
+          <li><span class="check-icon">&#9744;</span> tests/test_workflows.py &mdash; 3 integration tests</li>
+          <li><span class="check-icon">&#9744;</span> All starter pytest suites passing</li>
+          <li><span class="check-icon">&#9744;</span> REPORT.md &mdash; reflection covering 8 governance principles</li>
+        </ul>
+      </div>
+
+      <div class="repo-link-section">
+        <span>Repository link will appear upon submission.</span>
+      </div>
+    </section>
+
   </div>
 </div>
 
