@@ -31,3 +31,7 @@ Thumbs.db
 
 # Test coverage
 coverage/
+
+# PDF assembly scratch directories — submission markdown lives here pre-render
+.build/
+**/.build/
