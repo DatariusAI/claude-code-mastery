@@ -1,5 +1,5 @@
 """
-Incident Triage Workflow (WF-02) — TASK 4: Complete this file.
+Incident Triage Workflow (WF-02).
 
 Triggered during a live incident. Chains 4 MCP calls to diagnose
 the probable cause and recommend an action.
@@ -8,7 +8,7 @@ Output: A JSON dict matching the IncidentReport schema below.
 """
 from __future__ import annotations
 import json
-import time
+import sys
 from typing import TypedDict
 
 from mcp import github_tools, db_tools
@@ -18,12 +18,12 @@ from workflows.base import BaseWorkflow
 class IncidentReport(TypedDict):
     """The exact JSON schema your workflow must return."""
     service:             str
-    error_rate_now:      float    # errors/second in last 5 min
-    error_rate_30min_avg: float   # errors/second averaged over 30 min
-    likely_cause:        str      # Claude's inference (1–2 sentences)
-    recent_deploys:      list[str]  # list of "sha: message" strings
-    recommended_action:  str      # specific next step
-    escalate:            bool     # True if on-call should be paged
+    error_rate_now:      float
+    error_rate_30min_avg: float
+    likely_cause:        str
+    recent_deploys:      list[str]
+    recommended_action:  str
+    escalate:            bool
 
 
 # Fallback returned when parsing fails or a critical error occurs
@@ -37,34 +37,82 @@ ESCALATE_FALLBACK: IncidentReport = {
     "escalate":             True,
 }
 
+REQUIRED_KEYS = {
+    "service", "error_rate_now", "error_rate_30min_avg",
+    "likely_cause", "recent_deploys", "recommended_action", "escalate",
+}
+
 
 class IncidentTriageWorkflow(BaseWorkflow):
     name = "incident_triage"
 
     def execute(self, service_name: str = "payments") -> IncidentReport:
-        """
-        TASK 4: Implement this method.
+        try:
+            data_30min = db_tools.get_error_rate(service_name, window_minutes=30)
+        except Exception as exc:
+            print(f"incident_triage step failed: {exc}", file=sys.stderr)
+            data_30min = {}
 
-        Steps:
-          1. Call db_tools.get_error_rate(service_name, window_minutes=30)
-          2. Call github_tools.search_recent_commits(self.mcp, self.config.GITHUB_REPO, service_name, hours=4)
-          3. Call github_tools.get_priority_issues(self.mcp, self.config.GITHUB_REPO, labels=["bug", service_name])
-          4. Call db_tools.get_error_rate(service_name, window_minutes=5)  ← current snapshot
-          5. Load prompt with self._load_prompt("incident_triage.txt")
-          6. Inject all data into the prompt
-          7. Call self.mcp.ask(prompt)
-          8. Parse the response as JSON into an IncidentReport dict
-          9. Return the dict
+        try:
+            data_commits = github_tools.search_recent_commits(
+                self.mcp, self.config.GITHUB_REPO, service_name, hours=4
+            )
+        except Exception as exc:
+            print(f"incident_triage step failed: {exc}", file=sys.stderr)
+            data_commits = []
 
-        Error handling:
-          - If any MCP call raises an exception: log to stderr, use empty data, continue
-          - If Claude returns invalid JSON: log raw response to stderr, return ESCALATE_FALLBACK
-            with service=service_name set
+        try:
+            data_bugs = github_tools.get_priority_issues(
+                self.mcp, self.config.GITHUB_REPO,
+                labels=["bug", service_name],
+            )
+        except Exception as exc:
+            print(f"incident_triage step failed: {exc}", file=sys.stderr)
+            data_bugs = []
 
-        Args:
-            service_name: The microservice being investigated (e.g. 'payments')
+        try:
+            data_now = db_tools.get_error_rate(service_name, window_minutes=5)
+        except Exception as exc:
+            print(f"incident_triage step failed: {exc}", file=sys.stderr)
+            data_now = {}
 
-        Returns:
-            IncidentReport dict.
-        """
-        raise NotImplementedError("Task 4: implement IncidentTriageWorkflow.execute()")
+        prompt_tpl = self._load_prompt("incident_triage.txt")
+        prompt = (
+            prompt_tpl
+            .replace("{{SERVICE_NAME}}", service_name)
+            .replace("{{ERROR_RATE_30MIN}}", json.dumps(data_30min, indent=2))
+            .replace("{{ERROR_RATE_NOW}}", json.dumps(data_now, indent=2))
+            .replace("{{RECENT_COMMITS}}", json.dumps(data_commits, indent=2))
+            .replace("{{OPEN_BUGS}}", json.dumps(data_bugs, indent=2))
+        )
+
+        raw = self.mcp.ask(prompt)
+
+        cleaned = raw.strip()
+        if cleaned.startswith("```"):
+            cleaned = "\n".join(cleaned.splitlines()[1:])
+            if cleaned.rstrip().endswith("```"):
+                cleaned = cleaned.rstrip()[:-3]
+        cleaned = cleaned.strip()
+
+        try:
+            parsed = json.loads(cleaned)
+        except json.JSONDecodeError:
+            print(
+                f"incident_triage: malformed JSON. Raw: {raw}",
+                file=sys.stderr,
+            )
+            fallback = dict(ESCALATE_FALLBACK)
+            fallback["service"] = service_name
+            return fallback
+
+        if not isinstance(parsed, dict) or not REQUIRED_KEYS.issubset(parsed.keys()):
+            print(
+                f"incident_triage: response missing required keys. Got: {parsed}",
+                file=sys.stderr,
+            )
+            fallback = dict(ESCALATE_FALLBACK)
+            fallback["service"] = service_name
+            return fallback
+
+        return parsed
