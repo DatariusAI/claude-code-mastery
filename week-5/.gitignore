@@ -1,0 +1,10 @@
+.env
+*.pyc
+__pycache__/
+.pytest_cache/
+venv/
+*.log
+
+# Local-only fixtures: original (pre-sanitization) secret literals
+fixtures/_original_secrets_DO_NOT_COMMIT.md
+**/_original_secrets_DO_NOT_COMMIT.md
