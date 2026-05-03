@@ -8,7 +8,10 @@ Central portfolio for the Analytics Vidhya "Claude Code Mastery: AI-Augmented So
 
 - **Week 1: COMPLETE** — Hono codebase analysis, D3.js dependency graph, 12-question reflections report, GitHub Pages live at https://datariusai.github.io/claude-code-mastery/
 - **Week 2: COMPLETE** — Spec-Driven Feature Factory: 4 YAML prompt templates, formal spec (7 FRs, 5 NFRs, 10 scenarios), Hono/TypeScript URL shortener with REQ-ID traceability, 23 vitest tests (100% pass), self-critique loop, traceability matrix, 12-question report
-- **Weeks 3–7: UPCOMING**
+- **Week 3: COMPLETE** — Governed AI Pipeline: 5 slash commands, 3 governance hooks (validate-bash, check-secrets, scope-guard), audit log evidence, /ship pipeline with 4 hard gates, 12-question REPORT
+- **Week 4: COMPLETE** — MCP Engineering Intelligence Platform: audit logger (JSONL + SHA-256), 3 typed GitHub MCP wrappers, 2 chained workflows (Morning Brief + Incident Triage), CLAUDE.md + ANSWERS.md + 3 integration tests, governance mapping
+- **Week 5: COMPLETE** — Multi-Agent Pipeline & Skills Library: 2-agent code-review pipeline (Architect + Security in separate sessions) on OrderFlow, 12 OWASP-categorised findings, both prompts packaged as v1.0.0 Skills with 3-test tables and examples/, 100/100 self-review (Pass 2), 9-section REPORT, 4 dashboard Mermaid diagrams
+- **Weeks 6–7: UPCOMING**
 
 ## How This Repo Is Organized
 

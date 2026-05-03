@@ -1,6 +1,6 @@
 # Week 5 — Multi-Agent Pipelines & Skills
 
-**Status:** IN PROGRESS
+**Status:** COMPLETE
 
 ## Project overview
 
