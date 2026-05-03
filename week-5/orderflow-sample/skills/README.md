@@ -21,7 +21,8 @@ skills/
 
 | Skill | Category | Version | Status | Owner |
 |---|---|---|---|---|
-| *(Add your Skills here as you build them)* | | | | |
+| [architecture-review](./architecture-review/SKILL.md) | code-quality | 1.0.0 | draft | orderflow-engineering |
+| [security-audit](./security-audit/SKILL.md) | security | 1.0.0 | draft | orderflow-engineering |
 
 ## Adding a New Skill
 

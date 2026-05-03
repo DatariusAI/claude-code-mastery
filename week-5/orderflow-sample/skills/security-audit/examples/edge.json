@@ -1,0 +1,128 @@
+{
+  "scope": "orderflow-sample/payments/webhook.py",
+  "scanned_at": "2026-05-03T00:00:00Z",
+  "summary": {"critical": 2, "high": 3, "medium": 3, "low": 2, "info": 1},
+  "findings": [
+    {
+      "id": "SEC-001",
+      "severity": "critical",
+      "owasp_category": "A02:2021 - Cryptographic Failures",
+      "title": "Insecure signature verification using MD5 with custom HMAC-less construction",
+      "location": "orderflow-sample/payments/webhook.py:18",
+      "evidence": "expected = hashlib.md5(WEBHOOK_SECRET.encode() + request_body).hexdigest()",
+      "impact": "MD5 is cryptographically broken and the secret||body construction is not a proper HMAC, exposing the verifier to length-extension and collision attacks. An attacker who can forge a valid signature can submit arbitrary webhook events (e.g. fake charge.succeeded) and trigger order fulfillment without payment.",
+      "recommendation": "Replace with Stripe's official signature scheme using stripe.Webhook.construct_event, or at minimum use hmac.new(secret, body, hashlib.sha256) and compare with hmac.compare_digest. Never roll custom MAC constructions.",
+      "references": ["CWE-327", "https://stripe.com/docs/webhooks/signatures"]
+    },
+    {
+      "id": "SEC-002",
+      "severity": "critical",
+      "owasp_category": "A07:2021 - Identification and Authentication Failures",
+      "title": "Hardcoded webhook secret in source code",
+      "location": "orderflow-sample/payments/webhook.py:13",
+      "evidence": "WEBHOOK_SECRET = \"REPLACE_WITH_ENV_VAR_NOT_A_REAL_SECRET\"",
+      "impact": "Embedding the webhook secret as a module-level string constant violates OrderFlow's env-var secrets standard and means anyone with read access to the repo (or its history, CI logs, container images) can forge webhook events and manipulate payment state.",
+      "recommendation": "Load the secret from an environment variable (e.g. os.environ[\"STRIPE_WEBHOOK_SECRET\"]) at startup and fail closed if it is missing. Rotate the current value since it is presumed compromised.",
+      "references": ["CWE-798"]
+    },
+    {
+      "id": "SEC-003",
+      "severity": "high",
+      "owasp_category": "A02:2021 - Cryptographic Failures",
+      "title": "Non-constant-time signature comparison vulnerable to timing attacks",
+      "location": "orderflow-sample/payments/webhook.py:19",
+      "evidence": "if signature_header != expected:",
+      "impact": "The plain string inequality short-circuits on the first differing byte, leaking timing information that an attacker can exploit over many requests to recover a valid signature byte by byte.",
+      "recommendation": "Use hmac.compare_digest(signature_header, expected) for constant-time comparison of MAC values.",
+      "references": ["CWE-208"]
+    },
+    {
+      "id": "SEC-004",
+      "severity": "high",
+      "owasp_category": "A04:2021 - Insecure Design",
+      "title": "Missing replay protection (no timestamp / nonce / event-id check)",
+      "location": "orderflow-sample/payments/webhook.py:17-32",
+      "evidence": "def handle_webhook(request_body: bytes, signature_header: str) -> dict:\n    expected = hashlib.md5(WEBHOOK_SECRET.encode() + request_body).hexdigest()",
+      "impact": "The handler accepts any request whose signature matches, with no timestamp tolerance window or idempotency key check on event['id']. An attacker who captures one valid charge.succeeded webhook can replay it indefinitely to trigger duplicate fulfillment.",
+      "recommendation": "Verify a Stripe-Signature timestamp within a tight tolerance (e.g. 5 minutes) and persist processed event IDs to reject replays.",
+      "references": ["CWE-294"]
+    },
+    {
+      "id": "SEC-005",
+      "severity": "high",
+      "owasp_category": "A04:2021 - Insecure Design",
+      "title": "Signature header used without nullability or format validation",
+      "location": "orderflow-sample/payments/webhook.py:17-19",
+      "evidence": "def handle_webhook(request_body: bytes, signature_header: str) -> dict:\n    expected = hashlib.md5(WEBHOOK_SECRET.encode() + request_body).hexdigest()\n    if signature_header != expected:",
+      "impact": "If signature_header is None or an unexpected type, comparison still proceeds and may raise an unhandled exception leaking stack traces, or be coerced in surprising ways. There is also no parsing of the canonical Stripe-Signature header format (t=...,v1=...).",
+      "recommendation": "Validate that signature_header is a non-empty str, parse the canonical t=/v1= format, and reject malformed inputs before any cryptographic comparison.",
+      "references": ["CWE-20"]
+    },
+    {
+      "id": "SEC-006",
+      "severity": "medium",
+      "owasp_category": "A09:2021 - Security Logging and Monitoring Failures",
+      "title": "Sensitive payment object logged in full on failure",
+      "location": "orderflow-sample/payments/webhook.py:51",
+      "evidence": "logger.error(f\"Charge failed: {charge}\")",
+      "impact": "The entire Stripe charge object is dumped to logs, which can include PII, partial card metadata, billing address, and customer identifiers. This violates PCI-DSS log-handling expectations and increases blast radius if logs are exfiltrated.",
+      "recommendation": "Log only non-sensitive identifiers (e.g. charge['id'], failure_code) and explicitly omit cardholder/customer fields.",
+      "references": ["CWE-532"]
+    },
+    {
+      "id": "SEC-007",
+      "severity": "medium",
+      "owasp_category": "A03:2021 - Injection",
+      "title": "Unbounded JSON deserialization of untrusted input",
+      "location": "orderflow-sample/payments/webhook.py:22",
+      "evidence": "event = json.loads(request_body)",
+      "impact": "json.loads is invoked on the raw request body with no size cap and no schema validation. An attacker can submit a deeply nested or very large payload to cause excessive CPU/memory consumption (JSON DoS) before any business logic runs.",
+      "recommendation": "Enforce a maximum request body size at the framework layer and validate the parsed event against a strict schema (e.g. pydantic) before dispatching to handlers.",
+      "references": ["CWE-1287"]
+    },
+    {
+      "id": "SEC-008",
+      "severity": "medium",
+      "owasp_category": "A04:2021 - Insecure Design",
+      "title": "Unsafe access to nested event fields without validation",
+      "location": "orderflow-sample/payments/webhook.py:48-50",
+      "evidence": "charge = event[\"data\"][\"object\"]\nlogger.info(f\"Charge succeeded: {charge['id']} for ${charge['amount'] / 100}\")",
+      "impact": "After signature verification, the handler trusts the structure of event entirely. A malformed (but signed) payload, or one crafted post-secret-compromise, raises KeyError/TypeError that bubbles to the caller, potentially causing event loss and crash-based denial of service in the webhook worker.",
+      "recommendation": "Validate the event payload with a schema and use .get() with defensive defaults before dereferencing nested keys.",
+      "references": ["CWE-20"]
+    },
+    {
+      "id": "SEC-009",
+      "severity": "low",
+      "owasp_category": "A05:2021 - Security Misconfiguration",
+      "title": "Function fails open on unhandled event types",
+      "location": "orderflow-sample/payments/webhook.py:25-30",
+      "evidence": "handler = EVENT_HANDLERS.get(event_type)\nif handler:\n    ...\nelse:\n    logger.warning(f\"Unhandled webhook event type: {event_type}\")\nreturn {\"status\": \"ok\"}",
+      "impact": "Unknown or attacker-controlled event_type values produce a 200-equivalent {\"status\": \"ok\"} response and only a warning log. This makes it harder to detect probing or misrouted events and may mask integration regressions.",
+      "recommendation": "Return a distinct response (or raise) for unknown event types and emit a structured metric so anomalies are visible in monitoring.",
+      "references": ["CWE-754"]
+    },
+    {
+      "id": "SEC-010",
+      "severity": "low",
+      "owasp_category": "A09:2021 - Security Logging and Monitoring Failures",
+      "title": "Handler return value logged without sanitisation",
+      "location": "orderflow-sample/payments/webhook.py:28",
+      "evidence": "logger.info(f\"Handled {event_type}: {result}\")",
+      "impact": "Whatever a handler returns (potentially containing customer data, internal IDs, or token fragments) is written to logs at INFO level. Combined with SEC-006, this expands the sensitive-data-in-logs surface.",
+      "recommendation": "Log only a stable, non-sensitive correlation field (e.g. event['id']) rather than arbitrary handler return values.",
+      "references": ["CWE-532"]
+    },
+    {
+      "id": "SEC-011",
+      "severity": "info",
+      "owasp_category": "A08:2021 - Software and Data Integrity Failures",
+      "title": "Late, in-function import of json reduces auditability",
+      "location": "orderflow-sample/payments/webhook.py:21",
+      "evidence": "import json",
+      "impact": "Importing json inside the request path makes static analysis of dependencies harder and provides a small runtime hook point if the import system is later compromised. No direct exploit, but it weakens supply-chain hygiene around the security-critical entry point.",
+      "recommendation": "Move the import to the module top alongside other imports so the dependency surface of the handler is fully declared at load time.",
+      "references": ["CWE-1357"]
+    }
+  ]
+}

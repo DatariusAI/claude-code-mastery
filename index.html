@@ -1446,15 +1446,87 @@ flowchart TD
           <li><span class="check-icon">&#10003;</span> agent_second_prompt.txt &mdash; 5-part Security prompt</li>
           <li><span class="check-icon">&#10003;</span> findings.json &mdash; Security Agent output (JSON)</li>
           <li><span class="check-icon">&#10003;</span> fallback_notes.txt &mdash; corrupted-input observation</li>
-          <li>&#9744; skills/architecture-review/SKILL.md &mdash; v1.0.0</li>
-          <li>&#9744; skills/security-audit/SKILL.md &mdash; v1.0.0</li>
-          <li>&#9744; skills/README.md &mdash; index updated with both Skills</li>
-          <li>&#9744; REPORT.md + self-review against REVIEW_TEMPLATE rubric</li>
+          <li><span class="check-icon">&#10003;</span> skills/architecture-review/SKILL.md &mdash; v1.0.0</li>
+          <li><span class="check-icon">&#10003;</span> skills/security-audit/SKILL.md &mdash; v1.0.0</li>
+          <li><span class="check-icon">&#10003;</span> skills/README.md &mdash; index updated with both Skills</li>
+          <li><span class="check-icon">&#10003;</span> REPORT.md + self-review against REVIEW_TEMPLATE rubric</li>
         </ul>
       </div>
 
       <div class="repo-link-section">
         <p style="color:#8b949e;">Repository link will appear upon submission.</p>
+      </div>
+    </section>
+
+    <!-- W5 Pipeline Flow -->
+    <section id="w5p-pipeline">
+      <h2><span>#2</span> Pipeline Flow</h2>
+      <p class="section-desc">Two agents in two separate Claude Code sessions. CLAUDE.md and the target source feed both; design.md is the only hand-off contract from Architect to Security; each agent's prompt is then frozen as a v1.0.0 Skill.</p>
+      <div class="mermaid-container">
+        <pre class="mermaid">
+flowchart TD
+    IN1[CLAUDE.md] --> A1[Architect Agent<br/>Session A]
+    IN2[processor.py] --> A1
+    A1 --> D[design.md]
+    IN1 --> A2[Security Agent<br/>Session B]
+    IN2 --> A2
+    D --> A2
+    A2 --> F[findings.json]
+    A1 -.packaged as.-> S1[Skill: architecture-review v1.0.0]
+    A2 -.packaged as.-> S2[Skill: security-audit v1.0.0]
+    S1 --> LIB[(skills/<br/>library)]
+    S2 --> LIB
+        </pre>
+      </div>
+    </section>
+
+    <!-- W5 Architect Agent -->
+    <section id="w5p-architect">
+      <h2><span>#3</span> Architect Agent &mdash; Call &amp; Output</h2>
+      <p class="section-desc">Senior architect role, scope-locked to one module, with five DO-NOT exclusions to keep it out of security / tests / refactors. Output is a four-section markdown design doc plus a 2-sentence summary.</p>
+      <div class="mermaid-container">
+        <pre class="mermaid">
+sequenceDiagram
+    participant Caller
+    participant Architect as Architect Agent<br/>(Session A)
+    Caller->>Architect: ROLE + SCOPE + EXCLUSIONS<br/>+ INPUT (CLAUDE.md, processor.py)<br/>+ OUTPUT FORMAT
+    Note over Architect: stays in lane:<br/>no security<br/>no tests<br/>no refactors
+    Architect->>Architect: analyze boundary<br/>+ API surface<br/>+ data flow<br/>+ dependencies
+    Architect-->>Caller: design.md<br/>(4 sections + SUMMARY)
+        </pre>
+      </div>
+    </section>
+
+    <!-- W5 Security Agent -->
+    <section id="w5p-security">
+      <h2><span>#4</span> Security Agent &mdash; Call &amp; Output</h2>
+      <p class="section-desc">OWASP Top 10 (2021) specialist. Receives design.md as read-only context; produces ONLY a JSON object with severity-ordered, file:line-anchored findings. No prose preamble, no schema drift.</p>
+      <div class="mermaid-container">
+        <pre class="mermaid">
+sequenceDiagram
+    participant Caller
+    participant Security as Security Agent<br/>(Session B)
+    Caller->>Security: ROLE + SCOPE + EXCLUSIONS<br/>+ INPUT (CLAUDE.md, design.md, processor.py)<br/>+ OUTPUT FORMAT (JSON schema)
+    Note over Security: design.md is<br/>context only<br/>(do not critique)
+    Security->>Security: each finding =<br/>file:line + severity<br/>+ OWASP category<br/>+ impact + recommendation
+    Security-->>Caller: findings.json<br/>(12 findings, severity-ordered)
+        </pre>
+      </div>
+    </section>
+
+    <!-- W5 Skill Library -->
+    <section id="w5p-skills">
+      <h2><span>#5</span> Skill Library Structure</h2>
+      <p class="section-desc">skills/README.md is the index; each Skill has a SKILL.md with full 5-part structure plus Limitations, Tests, Changelog; each Skill ships an examples/ folder with typical / edge / minimal outputs.</p>
+      <div class="mermaid-container">
+        <pre class="mermaid">
+flowchart LR
+    R[skills/README.md<br/>Skill Index]
+    R --> AR[architecture-review/<br/>SKILL.md v1.0.0]
+    R --> SA[security-audit/<br/>SKILL.md v1.0.0]
+    AR --> AREX[examples/<br/>typical.md / edge.md / minimal.md]
+    SA --> SAEX[examples/<br/>typical.json / edge.json / minimal.json]
+        </pre>
       </div>
     </section>
 
