@@ -188,7 +188,7 @@
   <button class="week-tab" data-week="2" role="tab"><span class="status-dot in-progress"></span>W 02 &middot; Prompt Eng.</button>
   <button class="week-tab" data-week="3" role="tab"><span class="status-dot complete"></span>W 03 &middot; SDLC &amp; Gov</button>
   <button class="week-tab" data-week="4" role="tab"><span class="status-dot complete"></span>W 04 &middot; MCP</button>
-  <button class="week-tab" data-week="5" role="tab"><span class="status-dot upcoming"></span>W 05 &middot; Multi-Agent</button>
+  <button class="week-tab" data-week="5" role="tab"><span class="status-dot complete"></span>W 05 &middot; Multi-Agent</button>
   <button class="week-tab" data-week="6" role="tab"><span class="status-dot upcoming"></span>W 06 &middot; CI/CD</button>
   <button class="week-tab" data-week="7" role="tab"><span class="status-dot upcoming"></span>W 07 &middot; Capstone</button>
 </div>
@@ -1337,42 +1337,199 @@ flowchart TD
 <div class="week-panel" data-week-panel="5">
   <div class="sub-tabs">
     <button class="sub-tab active" data-subtab="w5-overview">Week Overview</button>
-    <button class="sub-tab" data-subtab="w5-project">Mini Project &mdash; CI/CD Pipeline</button>
+    <button class="sub-tab" data-subtab="w5-project">Mini Project &mdash; Multi-Agent Pipeline &amp; Skills</button>
   </div>
   <div class="sub-panel active" data-subpanel="w5-overview">
     <div class="week-overview-container">
-      <h2><span>Week 5</span> &mdash; Multi-Agent</h2>
-      <p class="week-overview-desc">GitHub integration, CI/CD pipelines, and advanced debugging with Claude Code.</p>
+      <h2><span>Week 5</span> &mdash; Multi-Agent Pipelines &amp; Skills</h2>
+      <p class="week-overview-desc">Building a 2-agent code-review pipeline on a Python e-commerce backend, then packaging both agent prompts as versioned, parameterised Skills.</p>
       <div class="session-card">
         <div class="session-num">Session 9</div>
-        <h3>GitHub &amp; CI/CD Integration</h3>
+        <h3>Multi-Agent Collaboration</h3>
         <p class="session-date">26 April 2025</p>
         <ul>
-          <li>GitHub Actions with Claude Code</li>
-          <li>Automated PR reviews and code analysis</li>
-          <li>CI/CD pipeline integration</li>
-          <li>Deployment automation</li>
+          <li>Agent role design and scope boundaries</li>
+          <li>Sequential agent pipelines (Architect &rarr; Security)</li>
+          <li>Structured agent inputs and outputs</li>
+          <li>Fallback strategies for corrupted input</li>
         </ul>
       </div>
       <div class="session-card">
         <div class="session-num">Session 10</div>
-        <h3>Advanced Debugging &amp; Testing</h3>
+        <h3>Skills &amp; Plugin Architecture</h3>
         <p class="session-date">2 May 2025</p>
         <ul>
-          <li>AI-assisted debugging strategies</li>
-          <li>Test generation and coverage analysis</li>
-          <li>Performance profiling with Claude Code</li>
-          <li>Regression testing automation</li>
+          <li>SKILL.md 5-part structure</li>
+          <li>Parameterisation with {{VARIABLE}} placeholders</li>
+          <li>Versioning and changelog discipline</li>
+          <li>Skill libraries and discoverability</li>
         </ul>
       </div>
     </div>
   </div>
   <div class="sub-panel" data-subpanel="w5-project">
-    <div class="coming-soon">
-      <div class="coming-soon-icon">&#9881;</div>
-      <h3>Coming Soon</h3>
-      <p>The CI/CD Pipeline mini project will be available when Week 5 begins on April 26.</p>
+
+    <!-- Local nav (matching Week 4 mini-project-nav pattern) -->
+    <div class="mini-project-nav">
+      <ul>
+        <li><a href="#w5p-overview">Overview</a></li>
+        <li><a href="#w5p-pipeline">Pipeline Flow</a></li>
+        <li><a href="#w5p-architect">Architect Agent</a></li>
+        <li><a href="#w5p-security">Security Agent</a></li>
+        <li><a href="#w5p-skills">Skill Library</a></li>
+      </ul>
     </div>
+
+    <header class="hero" id="w5p-overview">
+      <h1>Multi-Agent Pipeline &amp; Skills Library</h1>
+      <p>Two specialised review agents and two production Skills built on a deliberately-flawed e-commerce backend</p>
+      <div class="badge">2 agents &bull; 2 Skills &bull; OrderFlow sample &bull; self-reviewed</div>
+    </header>
+
+    <section>
+      <h2><span>#1</span> Project Overview</h2>
+      <p class="section-desc">Five-part build: an Architect agent and Security agent run in separate sessions, then both prompts are packaged as parameterised Skills with examples, tests, and a 100-point self-review.</p>
+      <div class="parts-grid">
+        <div class="part-card">
+          <div class="part-num">Part 1A</div>
+          <h3>Architect Agent</h3>
+          <ul>
+            <li>Senior architect role &middot; scope-locked to one module</li>
+            <li>Outputs structured design.md (4 sections + summary)</li>
+            <li>Explicit exclusions: no security, no tests, no refactors</li>
+          </ul>
+        </div>
+        <div class="part-card">
+          <div class="part-num">Part 1B</div>
+          <h3>Security Agent</h3>
+          <ul>
+            <li>OWASP Top 10 specialist &middot; JSON findings only</li>
+            <li>Severity-ordered, file:line-anchored findings</li>
+            <li>Explicit exclusions to prevent overlap with Architect</li>
+          </ul>
+        </div>
+        <div class="part-card">
+          <div class="part-num">Part 2A</div>
+          <h3>Skill Packaging</h3>
+          <ul>
+            <li>5-part SKILL.md with Limitations + Tests + Changelog</li>
+            <li>Parameterised with &#123;&#123;SCOPE&#125;&#125; / &#123;&#123;CONTEXT&#125;&#125; / &#123;&#123;TARGET&#125;&#125;</li>
+            <li>Versioned at v1.0.0</li>
+          </ul>
+        </div>
+        <div class="part-card">
+          <div class="part-num">Part 2B</div>
+          <h3>Skill Testing</h3>
+          <ul>
+            <li>3 runs each &middot; typical / edge / minimal</li>
+            <li>Concrete example outputs saved alongside each Skill</li>
+            <li>Prompts hardened from observed test gaps</li>
+          </ul>
+        </div>
+        <div class="part-card">
+          <div class="part-num">Part 2C</div>
+          <h3>Library Index + Self-Review</h3>
+          <ul>
+            <li>Updated skills/README.md index for discoverability</li>
+            <li>100-point self-review against REVIEW_TEMPLATE.md</li>
+            <li>Iteration notes for any sub-100 score</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="deliverables-section">
+        <h2><span>Deliverables</span> Checklist</h2>
+        <ul class="checklist">
+          <li><span class="check-icon">&#10003;</span> orderflow-sample/ &mdash; sanitized Analytics Vidhya scaffold</li>
+          <li><span class="check-icon">&#10003;</span> agent_architect_prompt.txt &mdash; 5-part Architect prompt</li>
+          <li><span class="check-icon">&#10003;</span> design.md &mdash; Architect Agent output (4 sections)</li>
+          <li><span class="check-icon">&#10003;</span> agent_second_prompt.txt &mdash; 5-part Security prompt</li>
+          <li><span class="check-icon">&#10003;</span> findings.json &mdash; Security Agent output (JSON)</li>
+          <li><span class="check-icon">&#10003;</span> fallback_notes.txt &mdash; corrupted-input observation</li>
+          <li><span class="check-icon">&#10003;</span> skills/architecture-review/SKILL.md &mdash; v1.0.0</li>
+          <li><span class="check-icon">&#10003;</span> skills/security-audit/SKILL.md &mdash; v1.0.0</li>
+          <li><span class="check-icon">&#10003;</span> skills/README.md &mdash; index updated with both Skills</li>
+          <li><span class="check-icon">&#10003;</span> REPORT.md + self-review against REVIEW_TEMPLATE rubric</li>
+        </ul>
+      </div>
+
+      <div class="repo-link-section">
+        <a href="https://github.com/DatariusAI/claude-code-mastery" target="_blank">View on GitHub &rarr;</a>
+      </div>
+    </section>
+
+    <!-- W5 Pipeline Flow -->
+    <section id="w5p-pipeline">
+      <h2><span>#2</span> Pipeline Flow</h2>
+      <p class="section-desc">Two agents in two separate Claude Code sessions. CLAUDE.md and the target source feed both; design.md is the only hand-off contract from Architect to Security; each agent's prompt is then frozen as a v1.0.0 Skill.</p>
+      <div class="mermaid-container">
+        <pre class="mermaid">
+flowchart TD
+    IN1[CLAUDE.md] --> A1[Architect Agent<br/>Session A]
+    IN2[processor.py] --> A1
+    A1 --> D[design.md]
+    IN1 --> A2[Security Agent<br/>Session B]
+    IN2 --> A2
+    D --> A2
+    A2 --> F[findings.json]
+    A1 -.packaged as.-> S1[Skill: architecture-review v1.0.0]
+    A2 -.packaged as.-> S2[Skill: security-audit v1.0.0]
+    S1 --> LIB[(skills/<br/>library)]
+    S2 --> LIB
+        </pre>
+      </div>
+    </section>
+
+    <!-- W5 Architect Agent -->
+    <section id="w5p-architect">
+      <h2><span>#3</span> Architect Agent &mdash; Call &amp; Output</h2>
+      <p class="section-desc">Senior architect role, scope-locked to one module, with five DO-NOT exclusions to keep it out of security / tests / refactors. Output is a four-section markdown design doc plus a 2-sentence summary.</p>
+      <div class="mermaid-container">
+        <pre class="mermaid">
+sequenceDiagram
+    participant Caller
+    participant Architect as Architect Agent<br/>(Session A)
+    Caller->>Architect: ROLE + SCOPE + EXCLUSIONS<br/>+ INPUT (CLAUDE.md, processor.py)<br/>+ OUTPUT FORMAT
+    Note over Architect: stays in lane:<br/>no security<br/>no tests<br/>no refactors
+    Architect->>Architect: analyze boundary<br/>+ API surface<br/>+ data flow<br/>+ dependencies
+    Architect-->>Caller: design.md<br/>(4 sections + SUMMARY)
+        </pre>
+      </div>
+    </section>
+
+    <!-- W5 Security Agent -->
+    <section id="w5p-security">
+      <h2><span>#4</span> Security Agent &mdash; Call &amp; Output</h2>
+      <p class="section-desc">OWASP Top 10 (2021) specialist. Receives design.md as read-only context; produces ONLY a JSON object with severity-ordered, file:line-anchored findings. No prose preamble, no schema drift.</p>
+      <div class="mermaid-container">
+        <pre class="mermaid">
+sequenceDiagram
+    participant Caller
+    participant Security as Security Agent<br/>(Session B)
+    Caller->>Security: ROLE + SCOPE + EXCLUSIONS<br/>+ INPUT (CLAUDE.md, design.md, processor.py)<br/>+ OUTPUT FORMAT (JSON schema)
+    Note over Security: design.md is<br/>context only<br/>(do not critique)
+    Security->>Security: each finding =<br/>file:line + severity<br/>+ OWASP category<br/>+ impact + recommendation
+    Security-->>Caller: findings.json<br/>(12 findings, severity-ordered)
+        </pre>
+      </div>
+    </section>
+
+    <!-- W5 Skill Library -->
+    <section id="w5p-skills">
+      <h2><span>#5</span> Skill Library Structure</h2>
+      <p class="section-desc">skills/README.md is the index; each Skill has a SKILL.md with full 5-part structure plus Limitations, Tests, Changelog; each Skill ships an examples/ folder with typical / edge / minimal outputs.</p>
+      <div class="mermaid-container">
+        <pre class="mermaid">
+flowchart LR
+    R[skills/README.md<br/>Skill Index]
+    R --> AR[architecture-review/<br/>SKILL.md v1.0.0]
+    R --> SA[security-audit/<br/>SKILL.md v1.0.0]
+    AR --> AREX[examples/<br/>typical.md / edge.md / minimal.md]
+    SA --> SAEX[examples/<br/>typical.json / edge.json / minimal.json]
+        </pre>
+      </div>
+    </section>
+
   </div>
 </div>
 
@@ -1606,6 +1763,7 @@ mermaid.initialize({
   var mermaidRenderedW2 = false;
   var mermaidRenderedW3 = false;
   var mermaidRenderedW4 = false;
+  var mermaidRenderedW5 = false;
   var d3Initialized = true; // D3 already runs above
 
   function renderMermaidForPanel(panelSelector, flagName) {
@@ -1624,6 +1782,7 @@ mermaid.initialize({
       if (flagName === 'w2') mermaidRenderedW2 = true;
       if (flagName === 'w3') mermaidRenderedW3 = true;
       if (flagName === 'w4') mermaidRenderedW4 = true;
+      if (flagName === 'w5') mermaidRenderedW5 = true;
     }).catch(function(err) {
       console.warn('Mermaid render error:', err);
     });
@@ -1647,6 +1806,11 @@ mermaid.initialize({
   function renderMermaidW4() {
     if (mermaidRenderedW4) return;
     renderMermaidForPanel('[data-subpanel="w4-project"]', 'w4');
+  }
+
+  function renderMermaidW5() {
+    if (mermaidRenderedW5) return;
+    renderMermaidForPanel('[data-subpanel="w5-project"]', 'w5');
   }
 
   // Sub-tabs (delegation)
@@ -1679,6 +1843,9 @@ mermaid.initialize({
       if (subtabId === 'w4-project') {
         setTimeout(renderMermaidW4, 150);
       }
+      if (subtabId === 'w5-project') {
+        setTimeout(renderMermaidW5, 150);
+      }
     }
   });
 
@@ -1710,6 +1877,12 @@ mermaid.initialize({
           setTimeout(renderMermaidW4, 150);
         }
       }
+      if (week === '5') {
+        var projectTab5 = document.querySelector('[data-subpanel="w5-project"]');
+        if (projectTab5 && projectTab5.classList.contains('active')) {
+          setTimeout(renderMermaidW5, 150);
+        }
+      }
     });
   });
 
@@ -1724,6 +1897,9 @@ mermaid.initialize({
     el.dataset.original = el.innerHTML;
   });
   document.querySelectorAll('[data-subpanel="w4-project"] .mermaid').forEach(function(el) {
+    el.dataset.original = el.innerHTML;
+  });
+  document.querySelectorAll('[data-subpanel="w5-project"] .mermaid').forEach(function(el) {
     el.dataset.original = el.innerHTML;
   });
 })();

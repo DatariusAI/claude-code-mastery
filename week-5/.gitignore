@@ -1,0 +1,14 @@
+.env
+*.pyc
+__pycache__/
+.pytest_cache/
+venv/
+*.log
+
+# Local-only build scripts (PDF generators contain author name on cover pages
+# and are run locally; the rendered PDF is the canonical artifact at repo root).
+.build/
+
+# Local-only fixtures: original (pre-sanitization) secret literals
+fixtures/_original_secrets_DO_NOT_COMMIT.md
+**/_original_secrets_DO_NOT_COMMIT.md

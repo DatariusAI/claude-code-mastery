@@ -1,0 +1,6 @@
+{
+  "scope": "orderflow-sample/notifications/__init__.py",
+  "scanned_at": "2026-05-03T00:00:00Z",
+  "summary": {"critical": 0, "high": 0, "medium": 0, "low": 0, "info": 0},
+  "findings": []
+}
