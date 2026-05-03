@@ -2,7 +2,7 @@
 
 import { CODE_LENGTH, CODE_CHARS, MAX_CODE_RETRIES } from '../constants.js';
 import { findByCode } from './store.js';
-import { randomBytes } from 'node:crypto';
+import { randomInt } from 'node:crypto';
 
 /**
  * Generate a collision-safe short code
@@ -12,10 +12,9 @@ import { randomBytes } from 'node:crypto';
  */
 export function generateCode(): string {
   for (let attempt = 0; attempt < MAX_CODE_RETRIES; attempt++) {
-    const bytes = randomBytes(CODE_LENGTH);
     let code = '';
     for (let i = 0; i < CODE_LENGTH; i++) {
-      code += CODE_CHARS[bytes[i] % CODE_CHARS.length];
+      code += CODE_CHARS[randomInt(0, CODE_CHARS.length)];
     }
     if (!findByCode(code)) {
       return code;
