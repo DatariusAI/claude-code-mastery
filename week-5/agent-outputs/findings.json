@@ -1,0 +1,145 @@
+{
+  "scope": "orderflow-sample/payments/processor.py",
+  "scanned_at": "2026-05-03T00:00:00Z",
+  "summary": {
+    "critical": 2,
+    "high": 4,
+    "medium": 3,
+    "low": 2,
+    "info": 1
+  },
+  "findings": [
+    {
+      "id": "SEC-001",
+      "severity": "critical",
+      "owasp_category": "A03:2021 - Injection",
+      "title": "SQL injection via f-string in record_transaction",
+      "location": "payments/processor.py:60",
+      "evidence": "query = f\"INSERT INTO transactions VALUES ('{user_id}', {amount}, '{charge_id}')\"",
+      "impact": "An attacker who controls user_id, amount, or charge_id (e.g. via a manipulated upstream caller or compromised charge metadata) can break out of the string literals and execute arbitrary SQL, leading to data exfiltration, tampering, or destruction of the transactions table.",
+      "recommendation": "Use parameterised queries with placeholders (e.g. cursor.execute('INSERT INTO transactions (user_id, amount, charge_id) VALUES (%s, %s, %s)', (user_id, amount, charge_id))) and never interpolate values into SQL strings.",
+      "references": ["CWE-89", "https://owasp.org/Top10/A03_2021-Injection/"]
+    },
+    {
+      "id": "SEC-002",
+      "severity": "critical",
+      "owasp_category": "A03:2021 - Injection",
+      "title": "SQL injection via f-string in get_payment_history",
+      "location": "payments/processor.py:79",
+      "evidence": "query = f\"SELECT * FROM transactions WHERE user_id = '{user_id}'\"",
+      "impact": "A caller-controlled user_id is concatenated directly into a SELECT, allowing UNION-based extraction of arbitrary tables or boolean blind injection to enumerate the database.",
+      "recommendation": "Replace the f-string with a parameterised query (e.g. cursor.execute('SELECT ... FROM transactions WHERE user_id = %s', (user_id,))).",
+      "references": ["CWE-89", "https://owasp.org/Top10/A03_2021-Injection/"]
+    },
+    {
+      "id": "SEC-003",
+      "severity": "high",
+      "owasp_category": "A01:2021 - Broken Access Control",
+      "title": "refund_payment performs no authorization check",
+      "location": "payments/processor.py:67-75",
+      "evidence": "def refund_payment(charge_id, amount=None):\n    payload = {\"charge\": charge_id}\n    return _call_stripe_api(payload, endpoint=\"refunds\")",
+      "impact": "Any authenticated (or unauthenticated, depending on the caller) actor can refund any charge by guessing or scraping a charge_id, enabling direct financial loss and refund-fraud abuse.",
+      "recommendation": "Require an authenticated principal and verify ownership of charge_id (look up the transaction row and confirm it belongs to the requesting user) plus an explicit role/permission check before invoking the Stripe refunds endpoint.",
+      "references": ["CWE-862", "https://owasp.org/Top10/A01_2021-Broken_Access_Control/"]
+    },
+    {
+      "id": "SEC-004",
+      "severity": "high",
+      "owasp_category": "A01:2021 - Broken Access Control",
+      "title": "get_payment_history lacks caller identity enforcement",
+      "location": "payments/processor.py:77-81",
+      "evidence": "def get_payment_history(user_id):\n    query = f\"SELECT * FROM transactions WHERE user_id = '{user_id}'\"\n    rows = _execute_query(query)",
+      "impact": "The function trusts the caller-supplied user_id with no check that the requesting principal owns it, enabling IDOR — any user can read any other user's full payment history.",
+      "recommendation": "Derive user_id from the authenticated session/token, never accept it as an unvalidated parameter, and enforce that the principal may only read their own rows.",
+      "references": ["CWE-639", "https://owasp.org/Top10/A01_2021-Broken_Access_Control/"]
+    },
+    {
+      "id": "SEC-005",
+      "severity": "high",
+      "owasp_category": "A04:2021 - Insecure Design",
+      "title": "Missing input validation enables zero/negative amount charges and refunds",
+      "location": "payments/processor.py:30-36",
+      "evidence": "# No input validation — amount could be negative or zero\npayload = {\"amount\": amount, \"currency\": currency, \"source\": card_token, ...}",
+      "impact": "Negative or zero amounts (and unvalidated currency codes / oversized values) reach Stripe and the DB, enabling balance manipulation, accounting corruption, and potential abuse where a negative charge effectively credits the attacker.",
+      "recommendation": "Validate amount > 0 and within a sane upper bound, validate currency against an allowlist of ISO 4217 codes, and validate card_token format before building the payload; reject with a typed error otherwise.",
+      "references": ["CWE-20", "https://owasp.org/Top10/A04_2021-Insecure_Design/"]
+    },
+    {
+      "id": "SEC-006",
+      "severity": "high",
+      "owasp_category": "A04:2021 - Insecure Design",
+      "title": "Non-idempotent retry loop can produce duplicate charges",
+      "location": "payments/processor.py:38-49",
+      "evidence": "for attempt in range(MAX_RETRIES):\n    try:\n        charge = _call_stripe_api(payload)\n        record_transaction(user_id, amount, charge[\"id\"])",
+      "impact": "If _call_stripe_api succeeds on Stripe's side but raises locally (e.g. network read timeout after the request was processed), the retry loop will re-issue the charge, billing the customer multiple times for one purchase.",
+      "recommendation": "Generate a unique idempotency key per logical payment attempt and pass it to Stripe via the Idempotency-Key header so retries reconcile to a single charge; only retry on classes of error known to be safe.",
+      "references": ["CWE-837", "https://stripe.com/docs/api/idempotent_requests"]
+    },
+    {
+      "id": "SEC-007",
+      "severity": "medium",
+      "owasp_category": "A02:2021 - Cryptographic Failures",
+      "title": "Hardcoded Stripe API key placeholder in source",
+      "location": "payments/processor.py:13",
+      "evidence": "STRIPE_API_KEY = \"REPLACE_WITH_ENV_VAR_NOT_A_REAL_KEY\"",
+      "impact": "Even though the current literal is a placeholder, the pattern guarantees that whoever fills it in will commit a live secret to the repository, exposing the Stripe account to anyone with read access to the source or its history.",
+      "recommendation": "Load the key at runtime from an environment variable or secrets manager (e.g. STRIPE_API_KEY = os.environ['STRIPE_API_KEY']) and remove the module-level literal entirely.",
+      "references": ["CWE-798", "https://owasp.org/Top10/A02_2021-Cryptographic_Failures/"]
+    },
+    {
+      "id": "SEC-008",
+      "severity": "medium",
+      "owasp_category": "A09:2021 - Security Logging and Monitoring Failures",
+      "title": "Full SQL statement with PII logged at INFO",
+      "location": "payments/processor.py:61",
+      "evidence": "logger.info(f\"Recording transaction: {query}\")",
+      "impact": "user_id, amount, and charge_id (and, once injection is fixed, any bound values) are written to the application log at INFO level, exposing financial PII to anyone with log access and creating a PCI-scope expansion of the log store.",
+      "recommendation": "Log only non-sensitive identifiers (e.g. a transaction UUID and charge_id) at INFO; never log raw SQL containing values, and route any payment-related diagnostics through a redacted logger.",
+      "references": ["CWE-532", "https://owasp.org/Top10/A09_2021-Security_Logging_and_Monitoring_Failures/"]
+    },
+    {
+      "id": "SEC-009",
+      "severity": "medium",
+      "owasp_category": "A01:2021 - Broken Access Control",
+      "title": "get_payment_history returns full row including sensitive PII",
+      "location": "payments/processor.py:80-81",
+      "evidence": "rows = _execute_query(query)\nreturn rows  # returns full row including sensitive fields",
+      "impact": "SELECT * propagates card_last4, email, and any future sensitive columns to the caller (and likely the HTTP response), violating data minimisation and broadening PCI/GDPR exposure if the endpoint is ever reachable by a less-privileged consumer.",
+      "recommendation": "Select an explicit allowlist of columns required by the caller (e.g. charge_id, amount, currency, created_at) and shape the response DTO to exclude card_last4 and email unless explicitly authorised.",
+      "references": ["CWE-213", "https://owasp.org/Top10/A01_2021-Broken_Access_Control/"]
+    },
+    {
+      "id": "SEC-010",
+      "severity": "low",
+      "owasp_category": "A09:2021 - Security Logging and Monitoring Failures",
+      "title": "Exception detail logged without context and swallowed",
+      "location": "payments/processor.py:46-49",
+      "evidence": "except Exception as e:\n    logger.error(f\"Payment attempt {attempt + 1} failed: {e}\")",
+      "impact": "Catching bare Exception and only logging str(e) loses stack traces and exception type, hindering incident response and potentially masking security-relevant failures (auth errors, signature mismatches) as transient retries.",
+      "recommendation": "Use logger.exception(...) to capture the traceback, narrow the except clause to expected transport/error classes, and surface authentication/authorization errors without retrying them.",
+      "references": ["CWE-778", "https://owasp.org/Top10/A09_2021-Security_Logging_and_Monitoring_Failures/"]
+    },
+    {
+      "id": "SEC-011",
+      "severity": "low",
+      "owasp_category": "A04:2021 - Insecure Design",
+      "title": "refund_payment treats amount=0 as full refund",
+      "location": "payments/processor.py:71-73",
+      "evidence": "if amount:\n    payload[\"amount\"] = amount\nreturn _call_stripe_api(payload, endpoint=\"refunds\")",
+      "impact": "The truthiness check silently converts amount=0 (and other falsy values) into a full refund, which can cause unintended full refunds when a partial-refund caller passes 0 due to an upstream rounding bug.",
+      "recommendation": "Check explicitly with `if amount is not None:` and validate that amount is a positive number not exceeding the original charge before forwarding to Stripe.",
+      "references": ["CWE-697"]
+    },
+    {
+      "id": "SEC-012",
+      "severity": "info",
+      "owasp_category": "A04:2021 - Insecure Design",
+      "title": "Public functions lack type hints despite project standard",
+      "location": "payments/processor.py:16,52,67,77",
+      "evidence": "def process_payment(amount, currency, card_token, user_id):",
+      "impact": "Without declared types the runtime cannot reject obviously malformed inputs (e.g. amount as a dict, user_id as a list) early, weakening the validation boundary around money-handling code.",
+      "recommendation": "Add type hints on all public signatures (amount: int, currency: str, card_token: str, user_id: str) and pair with runtime validation at the entry of each function.",
+      "references": ["CWE-1287"]
+    }
+  ]
+}

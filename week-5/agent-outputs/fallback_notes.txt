@@ -1,0 +1,18 @@
+Fallback observation — Security Agent on corrupted_processor.py
+================================================================
+
+The agent did not crash on the truncated file with the unbalanced
+brace; it produced JSON that parses but violates the schema —
+SEC-001's owasp_category packs two categories joined by "/", and the
+agent silently speculated about retry-loop and authorisation logic
+that lives beyond the truncation point instead of flagging the input
+as incomplete. Detection in a pipeline is three cheap checks before
+trusting the output: JSON.parse for malformed text, jsonschema /
+pydantic to enforce the exact category enum (this catches the SEC-001
+defect immediately), and `ast.parse` on the TARGET source before
+invoking the agent at all so corrupted code is rejected upstream.
+Retry strategy: rerun once with the same prompt, then once with a
+corrective preamble that names the violation and instructs the
+agent to set findings to [] plus an info-level note when required
+structure is missing, then escalate to human review rather than
+swallow the failure on a third attempt.

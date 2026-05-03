@@ -1,0 +1,123 @@
+{
+  "scope": "orderflow-sample/payments/processor.py",
+  "scanned_at": "2026-05-03T00:00:00Z",
+  "summary": {
+    "critical": 2,
+    "high": 3,
+    "medium": 2,
+    "low": 2,
+    "info": 1
+  },
+  "findings": [
+    {
+      "id": "SEC-001",
+      "severity": "critical",
+      "owasp_category": "A02:2021 - Cryptographic Failures / A07:2021 - Identification and Authentication Failures",
+      "title": "Hardcoded Stripe API key in source code",
+      "location": "orderflow-sample/payments/processor.py:13",
+      "evidence": "STRIPE_API_KEY = \"REPLACE_WITH_ENV_VAR_NOT_A_REAL_KEY\"",
+      "impact": "Hardcoded secrets are committed to version control and distributed with every deployment artefact, enabling any actor with repository or binary access to impersonate the merchant against Stripe and issue arbitrary charges, refunds, or data reads.",
+      "recommendation": "Load STRIPE_API_KEY from an environment variable or secrets manager (e.g. AWS Secrets Manager, HashiCorp Vault) at process start; fail closed if the variable is unset and never log the value.",
+      "references": ["CWE-798", "https://owasp.org/Top10/A02_2021-Cryptographic_Failures/"]
+    },
+    {
+      "id": "SEC-002",
+      "severity": "critical",
+      "owasp_category": "A04:2021 - Insecure Design / A03:2021 - Injection",
+      "title": "Missing input validation on payment amount enables negative/zero charges",
+      "location": "orderflow-sample/payments/processor.py:30-35",
+      "evidence": "# No input validation — amount could be negative or zero\n    payload = {\n        \"amount\": amount,",
+      "impact": "Untrusted callers can submit negative amounts (resulting in unauthorised refunds/credits to attacker-controlled cards), zero amounts (card-testing oracle), non-numeric values, or extreme values causing financial loss and PCI scope violations.",
+      "recommendation": "Reject any request where amount is not a positive integer in the smallest currency unit, within an allowed min/max range, and where currency is not in an explicit ISO-4217 allow-list before constructing the payload.",
+      "references": ["CWE-20", "CWE-1284", "https://owasp.org/Top10/A04_2021-Insecure_Design/"]
+    },
+    {
+      "id": "SEC-003",
+      "severity": "high",
+      "owasp_category": "A04:2021 - Insecure Design",
+      "title": "Unbounded retry loop without idempotency key risks duplicate charges",
+      "location": "orderflow-sample/payments/processor.py:38",
+      "evidence": "for attempt in range(MAX_RETRIES):",
+      "impact": "Retrying a charge creation request without a Stripe Idempotency-Key header can double- or triple-charge customers when the network fails after Stripe has already accepted the request, causing direct financial harm and chargebacks.",
+      "recommendation": "Generate a deterministic idempotency key per logical payment (e.g. UUIDv4 stored with the order) and pass it via the Stripe-Idempotency-Key header on every retry; only retry on idempotent error classes (network/5xx), never on 4xx.",
+      "references": ["CWE-837", "https://stripe.com/docs/api/idempotent_requests"]
+    },
+    {
+      "id": "SEC-004",
+      "severity": "high",
+      "owasp_category": "A03:2021 - Injection",
+      "title": "Untrusted user_id flowed into Stripe metadata without validation",
+      "location": "orderflow-sample/payments/processor.py:33-34",
+      "evidence": "\"metadata\": {\"user_id\": user_id\n    }",
+      "impact": "user_id is accepted with no type/length/charset enforcement and forwarded to a third party; an attacker can inject oversized payloads, control characters, or another tenant's identifier to cause metadata-based authorisation confusion in downstream reconciliation.",
+      "recommendation": "Coerce user_id to the expected primitive (e.g. int or UUID) and validate against the authenticated session's user before serialisation; reject mismatches with a 403.",
+      "references": ["CWE-20", "CWE-639"]
+    },
+    {
+      "id": "SEC-005",
+      "severity": "high",
+      "owasp_category": "A01:2021 - Broken Access Control",
+      "title": "No authorisation check binds card_token to user_id",
+      "location": "orderflow-sample/payments/processor.py:17-32",
+      "evidence": "def process_payment(amount, currency, card_token, user_id):\n    ...\n    \"source\": card_token,",
+      "impact": "The function trusts the caller-supplied user_id and card_token together with no proof that the authenticated principal owns either, allowing horizontal privilege escalation where attacker A charges victim B's saved card or attributes a charge to victim B's account.",
+      "recommendation": "Resolve user_id from the authenticated session/JWT (never from request body) and verify the card_token belongs to that user via Stripe Customer linkage before calling the charge endpoint.",
+      "references": ["CWE-639", "https://owasp.org/Top10/A01_2021-Broken_Access_Control/"]
+    },
+    {
+      "id": "SEC-006",
+      "severity": "medium",
+      "owasp_category": "A08:2021 - Software and Data Integrity Failures",
+      "title": "Syntactically broken payload dict will raise at runtime, fail-open risk",
+      "location": "orderflow-sample/payments/processor.py:30-35",
+      "evidence": "payload = {\n        ...\n        \"metadata\": {\"user_id\": user_id\n    }",
+      "impact": "The unbalanced braces in the payload literal cause a SyntaxError on import; if a future fix closes the dict incorrectly, malformed payloads may be silently sent to Stripe, and the broken state currently prevents any defence-in-depth elsewhere from running.",
+      "recommendation": "Close the inner metadata dict explicitly (`\"metadata\": {\"user_id\": user_id}`) and add a static check (mypy/ruff) to CI to prevent malformed literal regressions.",
+      "references": ["CWE-670"]
+    },
+    {
+      "id": "SEC-007",
+      "severity": "medium",
+      "owasp_category": "A05:2021 - Security Misconfiguration",
+      "title": "Module-level mutable global secret accessible to entire process",
+      "location": "orderflow-sample/payments/processor.py:13",
+      "evidence": "STRIPE_API_KEY = \"REPLACE_WITH_ENV_VAR_NOT_A_REAL_KEY\"",
+      "impact": "A module-level constant is reachable from any imported code path including third-party dependencies, expanding the blast radius of any RCE or pickle-deserialisation flaw to immediate key exfiltration.",
+      "recommendation": "Encapsulate secret retrieval behind a function (`_get_api_key()`) that fetches lazily from a secrets manager and avoid binding the value to a module attribute.",
+      "references": ["CWE-732"]
+    },
+    {
+      "id": "SEC-008",
+      "severity": "low",
+      "owasp_category": "A09:2021 - Security Logging and Monitoring Failures",
+      "title": "Logger configured but no audit log emitted for payment attempts",
+      "location": "orderflow-sample/payments/processor.py:10",
+      "evidence": "logger = logging.getLogger(__name__)",
+      "impact": "A logger is instantiated but never used in the charge flow, so failed/duplicate charge attempts cannot be detected or correlated during incident response, weakening fraud monitoring.",
+      "recommendation": "Emit a structured audit log entry (with redacted PAN/token, user_id, amount, attempt number, outcome) at each retry boundary and on terminal success/failure.",
+      "references": ["CWE-778", "https://owasp.org/Top10/A09_2021-Security_Logging_and_Monitoring_Failures/"]
+    },
+    {
+      "id": "SEC-009",
+      "severity": "low",
+      "owasp_category": "A04:2021 - Insecure Design",
+      "title": "Untyped public function signature accepts arbitrary types",
+      "location": "orderflow-sample/payments/processor.py:17",
+      "evidence": "def process_payment(amount, currency, card_token, user_id):",
+      "impact": "The CLAUDE.md standard mandates type hints; their absence here means callers can pass strings, lists, or None for amount/currency without static detection, increasing the chance the validation gaps in SEC-002/SEC-004 are reached.",
+      "recommendation": "Add explicit type hints (`amount: int, currency: str, card_token: str, user_id: int`) and a return-type annotation, then enforce with mypy --strict in CI.",
+      "references": ["CWE-1287"]
+    },
+    {
+      "id": "SEC-010",
+      "severity": "info",
+      "owasp_category": "A06:2021 - Vulnerable and Outdated Components",
+      "title": "TODO marker indicates known unresolved security debt",
+      "location": "orderflow-sample/payments/processor.py:12",
+      "evidence": "# TODO: move to environment config",
+      "impact": "An in-source TODO acknowledging the secret-handling defect (SEC-001) signals the issue is known but unscheduled, which is itself a governance/compliance finding under PCI-DSS 6.3.",
+      "recommendation": "Track the TODO as a ticketed security debt item with an owner and due date; remove the comment once SEC-001 is remediated.",
+      "references": ["CWE-1059"]
+    }
+  ]
+}
