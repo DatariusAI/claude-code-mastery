@@ -1,5 +1,4 @@
 # The Codebase Detective — Mini Project 1
-**Learner:** Mohammad Alrashed
 **Repository Studied:** honojs/hono
 
 | | |

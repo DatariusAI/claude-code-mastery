@@ -1,0 +1,22 @@
+name: "CodeQL config"
+
+# Exclude educational fixtures from CodeQL scanning.
+#
+# week-5/orderflow-sample/ is the Analytics Vidhya "OrderFlow" sample app shipped
+# with the Week 5 mini project brief — it is intentionally vulnerable code used
+# as a target for the multi-agent Architect + Security review pipeline. The
+# scaffold ships with deliberate fixtures (MD5 password hashing, plaintext
+# password logging, weak HMAC, hardcoded secret placeholders) so the lab's
+# Security Agent has something real to find. Scanning these patterns as
+# production CodeQL alerts produces false positives and blocks unrelated PRs
+# from merging.
+#
+# The findings ARE captured — see week-5/agent-outputs/findings.json for the
+# Security Agent's 12-finding OWASP-categorised report on this same scaffold.
+# The exclusion below is therefore a duplicate-detection silencer, not a
+# coverage gap.
+#
+# Anything OUTSIDE the orderflow-sample/ subdirectory (real production-style
+# code in week-1/, week-2/, week-3/, week-4/, future weeks) remains in scope.
+paths-ignore:
+  - 'week-5/orderflow-sample/**'

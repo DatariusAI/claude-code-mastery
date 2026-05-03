@@ -18,7 +18,7 @@ AI-assisted deep dive into the [Hono](https://github.com/honojs/hono) web framew
 | D3.js Dependency Graph | [`/docs/visualization/dependency-graph.html`](../docs/visualization/dependency-graph.html) |
 | Bug Audit | [`/docs/bug-audit.md`](../docs/bug-audit.md) |
 | Program Dashboard | [`/index.html`](../index.html) |
-| Submission PDF | [`/Mini Project 1 – Codebase Detective – Mohammad Alrashed.pdf`](../) |
+| Submission PDF | [Mini Project 1 — submission PDF](../) |
 
 ### Key Findings
 
