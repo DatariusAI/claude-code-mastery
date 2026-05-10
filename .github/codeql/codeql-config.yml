@@ -11,12 +11,23 @@ name: "CodeQL config"
 # production CodeQL alerts produces false positives and blocks unrelated PRs
 # from merging.
 #
-# The findings ARE captured — see week-5/agent-outputs/findings.json for the
-# Security Agent's 12-finding OWASP-categorised report on this same scaffold.
-# The exclusion below is therefore a duplicate-detection silencer, not a
-# coverage gap.
+# week-6/healthtrack-api/app/ is the Analytics Vidhya "HealthTrack" sample app
+# shipped with the Week 6 mini project brief — same teaching-fixture pattern
+# (MD5 password hashing, plaintext password logging, hardcoded JWT/DB/SMS
+# secrets, SQL with PII). The Week 6 CI pipeline depends on the Security Audit
+# Skill flagging these as CRITICAL findings; sanitising them would silence the
+# AI-Skill gate. See week-6/healthtrack-api/SECURITY_FIXTURES.md for the policy
+# decision.
 #
-# Anything OUTSIDE the orderflow-sample/ subdirectory (real production-style
-# code in week-1/, week-2/, week-3/, week-4/, future weeks) remains in scope.
+# The findings ARE captured — see week-5/agent-outputs/findings.json (Week 5)
+# and the Week 6 AI-Skill CI gate output (Week 6) for the same patterns
+# documented as intentional. The exclusions below are therefore duplicate-
+# detection silencers, not coverage gaps.
+#
+# Anything OUTSIDE these two specific scaffold subdirectories (real
+# production-style code in week-1/, week-2/, week-3/, week-4/, week-7/, and
+# the rest of week-6/healthtrack-api/ outside app/ — Dockerfile, compose,
+# ci.yml, plugins/, scripts/, tests/) remains in scope.
 paths-ignore:
   - 'week-5/orderflow-sample/**'
+  - 'week-6/healthtrack-api/app/**'

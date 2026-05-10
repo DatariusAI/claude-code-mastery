@@ -77,11 +77,35 @@ When that happens:
 This is documented in evidence/ so the rationale is captured next to
 the action, not lost in git history.
 
+## CodeQL exemption
+
+Secret scanning and CodeQL are two separate scanners with separate
+exemption files. The fixture literals also produce CodeQL alerts on
+the *consequence* of hardcoding (MD5 password hashing in
+`auth.py:_make_token`, clear-text password logging in
+`auth.py:login`, SQL queries with PII in `vitals.py` debug logs) —
+not just the credential strings themselves. CodeQL's PR check is
+configured to block merges on new alerts, so without an exemption
+every Week 6 PR would be blocked by the same teaching defects.
+
+The repo-root file `.github/codeql/codeql-config.yml` has been
+extended with a `paths-ignore` entry for `week-6/healthtrack-api/app/**`
+that mirrors the existing `week-5/orderflow-sample/**` exemption.
+The scope is **deliberately narrow**: only `app/` is exempted.
+The Dockerfile, `docker-compose.yml`, `ci.yml`, `plugins/`,
+`scripts/`, and `tests/` all stay under CodeQL coverage so any
+real bug introduced there is caught.
+
+Existing alerts on the same files are dismissed via the API with
+reason `won't fix` and a comment pointing at this document. The
+audit trail is preserved in the alert's dismissal metadata.
+
 ## Lifetime
 
 These fixtures live **ONLY** in `week-6/`. They must NEVER be copied
 to other weeks or to any production repository. Week 7 (Capstone)
 must use environment-variable-loaded secrets, not these literals.
-The `.github/secret_scanning.yml` `paths-ignore` list is scoped to
-the four files above precisely so that the exemption can't silently
-spread.
+Both `.github/secret_scanning.yml` (in `week-6/healthtrack-api/.github/`)
+and `.github/codeql/codeql-config.yml` (at repo root) `paths-ignore`
+lists are scoped to the same four-file `app/` directory precisely
+so that the exemption can't silently spread.
