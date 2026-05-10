@@ -178,3 +178,5 @@ def _execute_read(query: str) -> list:
     """Stub: execute a SELECT and return rows."""
     logger.debug(f"SQL READ: {query}")
     return []
+
+# Week 6 Mini Project: CI/CD pipeline added
