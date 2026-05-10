@@ -12,13 +12,55 @@ from app import create_app
 
 
 class TestHealthEndpoint:
+    """
+    /health route exercises psycopg2.connect and redis.Redis.from_url(...).ping().
+    Tests mock both so they pass without a running database/cache.
+    """
 
-    def test_health_returns_200_and_ok_body(self):
+    def test_health_all_ok_returns_200_and_full_payload(self, mocker):
+        mocker.patch("app.psycopg2.connect", return_value=mocker.Mock())
+        mock_redis = mocker.Mock()
+        mock_redis.ping.return_value = True
+        mocker.patch("app.redis.Redis.from_url", return_value=mock_redis)
+
         app = create_app()
-        client = app.test_client()
-        response = client.get("/health")
+        response = app.test_client().get("/health")
+
         assert response.status_code == 200
-        assert response.get_json() == {"status": "ok"}
+        assert response.get_json() == {
+            "status": "ok",
+            "checks": {"database": "ok", "cache": "ok"},
+        }
+
+    def test_health_db_down_returns_503(self, mocker):
+        mocker.patch("app.psycopg2.connect", side_effect=Exception("db unreachable"))
+        mock_redis = mocker.Mock()
+        mock_redis.ping.return_value = True
+        mocker.patch("app.redis.Redis.from_url", return_value=mock_redis)
+
+        app = create_app()
+        response = app.test_client().get("/health")
+
+        assert response.status_code == 503
+        body = response.get_json()
+        assert body == {
+            "status": "degraded",
+            "checks": {"database": "fail", "cache": "ok"},
+        }
+
+    def test_health_cache_down_returns_503(self, mocker):
+        mocker.patch("app.psycopg2.connect", return_value=mocker.Mock())
+        mocker.patch("app.redis.Redis.from_url", side_effect=Exception("cache unreachable"))
+
+        app = create_app()
+        response = app.test_client().get("/health")
+
+        assert response.status_code == 503
+        body = response.get_json()
+        assert body == {
+            "status": "degraded",
+            "checks": {"database": "ok", "cache": "fail"},
+        }
 
 
 class TestRecordVitals:

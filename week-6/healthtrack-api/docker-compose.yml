@@ -1,0 +1,75 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# HealthTrack API — local dev stack
+#
+# Three services with health-gated startup:
+#   api    — Flask app served by gunicorn (built from ./Dockerfile)
+#   db     — PostgreSQL 15 (alpine) for primary data
+#   cache  — Redis 7 (alpine) for hot reads / rate limiting
+#
+# api depends_on db AND cache with `condition: service_healthy` — api won't
+# start until both backing stores have passed their first healthcheck. This
+# eliminates the "container started but DB isn't ready yet" race that bites
+# every Flask + Postgres compose stack.
+#
+# Secret hygiene:
+#   - api loads its env from .env (gitignored).
+#   - db reads DB_USER / DB_PASSWORD / DB_NAME from the same .env via shell
+#     substitution; never hardcoded in this file.
+#   - .env.example ships the placeholder shape; copy it to .env locally and
+#     fill in real-but-local values. The .env file MUST NEVER be committed.
+#
+# api healthcheck note:
+#   The api service deliberately omits a compose-level `healthcheck:` block.
+#   The Dockerfile already declares one (python urllib probe of /health,
+#   30s interval, 20s start_period — see Dockerfile lines 47–48). Compose
+#   inherits that automatically when no override is given, so adding a
+#   second healthcheck here would just duplicate the spec.
+# ─────────────────────────────────────────────────────────────────────────────
+
+services:
+  api:
+    build:
+      context: .
+    image: healthtrack:local
+    ports:
+      - "5000:5000"
+    env_file:
+      - .env
+    depends_on:
+      db:
+        condition: service_healthy
+      cache:
+        condition: service_healthy
+    restart: unless-stopped
+
+  db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
+    restart: unless-stopped
+
+  cache:
+    image: redis:7-alpine
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:

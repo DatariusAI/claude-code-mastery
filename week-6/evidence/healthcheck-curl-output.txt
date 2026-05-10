@@ -1,0 +1,14 @@
+HTTP/1.1 200 OK
+Server: gunicorn
+Date: Sun, 10 May 2026 18:28:14 GMT
+Connection: close
+Content-Type: application/json
+Content-Length: 80
+
+{
+  "checks": {
+    "cache": "ok",
+    "database": "ok"
+  },
+  "status": "ok"
+}

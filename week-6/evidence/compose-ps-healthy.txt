@@ -1,0 +1,4 @@
+NAME                      IMAGE                COMMAND                  SERVICE   CREATED         STATUS                   PORTS
+healthtrack-api-api-1     healthtrack:local    "gunicorn --bind 0.0…"   api       2 minutes ago   Up 2 minutes (healthy)   0.0.0.0:5000->5000/tcp, [::]:5000->5000/tcp
+healthtrack-api-cache-1   redis:7-alpine       "docker-entrypoint.s…"   cache     2 minutes ago   Up 2 minutes (healthy)   6379/tcp
+healthtrack-api-db-1      postgres:15-alpine   "docker-entrypoint.s…"   db        2 minutes ago   Up 2 minutes (healthy)   5432/tcp

@@ -1637,18 +1637,117 @@ flowchart LR
           <li><span class="check-icon">&#10003;</span> .github/pull_request_template.md (customised)</li>
           <li><span class="check-icon">&#10003;</span> Dockerfile (multi-stage)</li>
           <li><span class="check-icon">&#10003;</span> .dockerignore</li>
-          <li><span class="check-icon"></span> docker-compose.yml (3 services)</li>
-          <li><span class="check-icon"></span> .env.example (committed)</li>
-          <li><span class="check-icon"></span> .env (gitignored)</li>
-          <li><span class="check-icon"></span> /health endpoint (with database + cache sub-checks)</li>
-          <li><span class="check-icon"></span> SECURITY_FIXTURES.md (teaching-fixture documentation)</li>
-          <li><span class="check-icon"></span> REPORT.md (rubric reflection answers)</li>
+          <li><span class="check-icon">&#10003;</span> docker-compose.yml (3 services)</li>
+          <li><span class="check-icon">&#10003;</span> .env.example (committed)</li>
+          <li><span class="check-icon">&#10003;</span> .env (gitignored)</li>
+          <li><span class="check-icon">&#10003;</span> /health endpoint (with database + cache sub-checks)</li>
+          <li><span class="check-icon">&#10003;</span> SECURITY_FIXTURES.md (teaching-fixture documentation)</li>
+          <li><span class="check-icon">&#10003;</span> REPORT.md (rubric reflection answers)</li>
         </ul>
       </div>
 
       <div class="repo-link-section">
         <p class="section-desc">Repository link will appear upon submission.</p>
       </div>
+    </section>
+
+    <!-- W6 CI Pipeline Architecture -->
+    <section id="w6p-pipeline">
+      <h2><span>#2</span> CI Pipeline Architecture</h2>
+      <p class="section-desc">Four jobs with explicit needs: ordering form a dependency DAG. The AI-Skill job parses the Security Audit Skill output and exits non-zero on any CRITICAL finding, blocking merge. Coverage gate at 80% and CRITICAL gate are independent &mdash; either can fail the run.</p>
+      <div class="mermaid-container">
+        <pre class="mermaid">
+flowchart LR
+    PR([PR opened / push to main]) --&gt; LINT[lint<br/>flake8 + black]
+    LINT --&gt; TEST[test<br/>pytest --cov &ge; 80%]
+    LINT --&gt; SEC[security<br/>bandit + safety]
+    TEST --&gt; AI[ai-skills<br/>Security Audit Skill<br/>on app/vitals.py]
+    SEC --&gt; AI
+    AI --&gt;|no CRITICAL| GREEN([green check<br/>merge ready])
+    AI --&gt;|CRITICAL found| BLOCK([red X<br/>merge BLOCKED])
+        </pre>
+      </div>
+    </section>
+
+    <!-- W6 Docker Architecture -->
+    <section id="w6p-dockerfile">
+      <h2><span>#3</span> Containerisation &mdash; Multi-Stage Dockerfile</h2>
+      <p class="section-desc">Stage 1 (python:3.11) installs deps into /install. Stage 2 (python:3.11-slim) copies only that prefix, drops to non-root appuser UID 10001, then runs gunicorn with a urllib HEALTHCHECK. Final image: 236 MB &mdash; the builder stage and its build toolchain never reach the registry.</p>
+      <div class="mermaid-container">
+        <pre class="mermaid">
+flowchart TB
+    subgraph builder[Stage 1: builder &mdash; python:3.11]
+        direction TB
+        B1[Full python:3.11] --&gt; B2[pip install --prefix=/install<br/>-r requirements.txt]
+    end
+    subgraph runtime[Stage 2: runtime &mdash; python:3.11-slim]
+        direction TB
+        R1[python:3.11-slim] --&gt; R2[ENV PYTHONDONTWRITEBYTECODE=1<br/>PYTHONUNBUFFERED=1]
+        R2 --&gt; R3[useradd appuser UID 10001]
+        R3 --&gt; R4[COPY /install &rarr; /usr/local]
+        R4 --&gt; R5[USER appuser]
+        R5 --&gt; R6[EXPOSE 5000]
+        R6 --&gt; R7[HEALTHCHECK urllib /health]
+        R7 --&gt; R8[CMD gunicorn app:create_app]
+    end
+    B2 -. COPY --from=builder .-&gt; R4
+        </pre>
+      </div>
+    </section>
+
+    <!-- W6 Compose Stack & Pipeline Flow -->
+    <section id="w6p-compose">
+      <h2><span>#4</span> Compose Stack &amp; End-to-End Flow</h2>
+      <p class="section-desc">docker-compose.yml declares api + postgres:15-alpine + redis:7-alpine. api uses depends_on with condition: service_healthy, so it never starts until both backing stores answer their first healthcheck. The sequence below traces a developer push through the CI pipeline to the merge gate.</p>
+      <div class="mermaid-container">
+        <pre class="mermaid">
+sequenceDiagram
+    participant Dev as Developer
+    participant GH as GitHub
+    participant CI as ci.yml
+    participant Skill as Security Audit Skill
+    participant Gate as Merge gate
+    Dev-&gt;&gt;GH: git push + gh pr create
+    GH-&gt;&gt;CI: trigger (pull_request)
+    CI-&gt;&gt;CI: lint
+    par
+        CI-&gt;&gt;CI: test &mdash; pytest cov &ge; 80%
+    and
+        CI-&gt;&gt;CI: security &mdash; bandit + safety
+    end
+    CI-&gt;&gt;Skill: security-audit --scope app/vitals.py
+    Skill--&gt;&gt;CI: JSON findings
+    alt no CRITICAL
+        CI-&gt;&gt;Gate: exit 0
+        Gate--&gt;&gt;Dev: green check &mdash; merge ready
+    else CRITICAL found
+        CI-&gt;&gt;Gate: exit 1
+        Gate--&gt;&gt;Dev: red X &mdash; merge BLOCKED
+    end
+        </pre>
+      </div>
+    </section>
+
+    <!-- W6 Rubric Self-Assessment -->
+    <section id="w6p-validation">
+      <h2><span>#5</span> Rubric Self-Assessment</h2>
+      <p class="section-desc">100-point rubric mapped to where each item lives in the submission and a self-graded result. validate_ci.py reports &ldquo;All checks passed&rdquo; across all 4 parts (Sessions A+B+C). The +10 bonus is split: PR-template customisation lands here; the AI-Skill summary in PR comments lands in Session D once the end-to-end CI run is captured.</p>
+      <table class="audit-table">
+        <thead>
+          <tr><th>#</th><th>Rubric item</th><th>Where it lives</th><th>Result</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>1</td><td>CI workflow at .github/workflows/ci.yml; triggers on PR + push to main</td><td>week-6/healthtrack-api/.github/workflows/ci.yml</td><td><strong>PASS</strong> &middot; 15/15</td></tr>
+          <tr><td>2</td><td>4 jobs with needs: ordering; coverage &ge; 80%; CRITICAL gate</td><td>ci.yml jobs lint &rarr; {test, security} &rarr; ai-skills</td><td><strong>PASS</strong> &middot; 25/25</td></tr>
+          <tr><td>3</td><td>Multi-stage Dockerfile; non-root; HEALTHCHECK; EXPOSE; Python env vars</td><td>week-6/healthtrack-api/Dockerfile</td><td><strong>PASS</strong> &middot; 20/20</td></tr>
+          <tr><td>4</td><td>3-service compose; healthchecks; named volumes; depends_on: condition: service_healthy</td><td>week-6/healthtrack-api/docker-compose.yml</td><td><strong>PASS</strong> &middot; 15/15</td></tr>
+          <tr><td>5</td><td>.env.example committed; .env gitignored; no real secrets in git log</td><td>week-6/healthtrack-api/.env.example + .gitignore</td><td><strong>PASS</strong> &middot; 10/10</td></tr>
+          <tr><td>6</td><td>/health with database + cache sub-checks; 503 on degradation</td><td>app/__init__.py /health route + 3 mocked tests</td><td><strong>PASS</strong> &middot; 10/10</td></tr>
+          <tr><td>7</td><td>REPORT.md with concrete-evidence reflection answers</td><td>week-6/healthtrack-api/REPORT.md</td><td><strong>PASS</strong> &middot; 5/5</td></tr>
+          <tr><td>B1</td><td>PR template &mdash; Performance / Migrations / Feature Flags</td><td>.github/pull_request_template.md</td><td><strong>BONUS</strong> &middot; +5</td></tr>
+          <tr><td>B2</td><td>AI-Skill review summary in PR comments (real CI run)</td><td>Session D end-to-end test</td><td>pending Session D</td></tr>
+        </tbody>
+      </table>
     </section>
 
   </div>
