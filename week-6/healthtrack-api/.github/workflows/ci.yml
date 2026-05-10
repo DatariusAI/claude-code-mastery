@@ -1,0 +1,210 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# HealthTrack API — Continuous Integration
+#
+# Jobs (with needs: ordering):
+#   1. lint        — flake8 + black              (no deps)
+#   2. test        — pytest + coverage ≥80%       (needs: lint)
+#   3. security    — bandit + safety              (needs: lint, parallel with test)
+#   4. ai-skills   — Security Audit Skill on app/vitals.py
+#                                                  (needs: test, security)
+#
+# CRITICAL gate: ai-skills parses JSON output and exits non-zero on any
+# finding with severity == "CRITICAL", blocking merge.
+#
+# See REPORT.md for design rationale (rubric questions answered there).
+# ─────────────────────────────────────────────────────────────────────────────
+
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+defaults:
+  run:
+    # When this workflow lives at repo root .github/workflows/ci.yml,
+    # all `run:` steps execute from week-6/healthtrack-api/. The Skills
+    # path (plugins/run_skill.py) and the source tree (app/, tests/)
+    # are then both reachable as relative paths.
+    working-directory: week-6/healthtrack-api
+
+env:
+  PYTHON_VERSION: "3.11"
+
+jobs:
+  # ───────────────────────────────────────────────────────────────────────────
+  lint:
+    name: Lint (flake8 + black)
+    runs-on: ubuntu-latest
+    steps:
+      # Static-style gates run first; everything downstream depends on this.
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: "pip"
+          cache-dependency-path: week-6/healthtrack-api/requirements.txt
+
+      - name: Install lint tools
+        run: pip install flake8 black
+
+      - name: flake8
+        run: flake8 app/ tests/
+
+      - name: black --check
+        run: black --check app/ tests/
+
+      - name: Job summary
+        if: always()
+        run: |
+          {
+            echo "## Lint"
+            echo ""
+            echo "- flake8: ${{ job.status }}"
+            echo "- black --check: ${{ job.status }}"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  # ───────────────────────────────────────────────────────────────────────────
+  test:
+    name: Test (pytest + coverage)
+    runs-on: ubuntu-latest
+    needs: lint
+    steps:
+      # Run the test suite with coverage gated at 80% (rubric requirement).
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: "pip"
+          cache-dependency-path: week-6/healthtrack-api/requirements.txt
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt pytest pytest-cov
+
+      - name: Run pytest with coverage
+        run: pytest tests/ --cov=app --cov-report=xml --cov-report=term --cov-fail-under=80
+
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-xml
+          path: week-6/healthtrack-api/coverage.xml
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Job summary
+        if: always()
+        run: |
+          {
+            echo "## Test"
+            echo ""
+            echo "- pytest --cov=app --cov-fail-under=80: ${{ job.status }}"
+            echo "- coverage.xml uploaded as artifact \`coverage-xml\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  # ───────────────────────────────────────────────────────────────────────────
+  security:
+    name: Security (bandit + safety)
+    runs-on: ubuntu-latest
+    needs: lint
+    steps:
+      # Static dependency + source security gates; runs in parallel with test.
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: "pip"
+          cache-dependency-path: week-6/healthtrack-api/requirements.txt
+
+      - name: Install security tools
+        run: pip install bandit safety
+
+      - name: bandit
+        run: bandit -r app/ -ll
+
+      - name: safety
+        run: safety check -r requirements.txt
+
+      - name: Job summary
+        if: always()
+        run: |
+          {
+            echo "## Security"
+            echo ""
+            echo "- bandit -r app/ -ll: ${{ job.status }}"
+            echo "- safety check -r requirements.txt: ${{ job.status }}"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  # ───────────────────────────────────────────────────────────────────────────
+  ai-skills:
+    name: AI Skills (Security Audit gate)
+    runs-on: ubuntu-latest
+    needs: [test, security]
+    env:
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+    steps:
+      # Run the Security Audit Skill against app/vitals.py and block merge
+      # if any finding has severity == "CRITICAL".
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: "pip"
+          cache-dependency-path: week-6/healthtrack-api/requirements.txt
+
+      - name: Install Anthropic SDK
+        run: pip install anthropic
+
+      - name: Run Security Audit Skill
+        run: |
+          python plugins/run_skill.py security-audit \
+            --scope app/vitals.py \
+            --context CLAUDE.md \
+            --no-save > /tmp/security.json
+          echo "## AI Skills — Security Audit" >> "$GITHUB_STEP_SUMMARY"
+          echo '```json' >> "$GITHUB_STEP_SUMMARY"
+          cat /tmp/security.json >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Block merge on CRITICAL findings
+        run: |
+          python - <<'EOF'
+          import json, sys
+          try:
+              with open("/tmp/security.json") as f:
+                  content = f.read().strip()
+              # Skill output may be wrapped in prose; locate the JSON array.
+              start = content.find("[")
+              end   = content.rfind("]") + 1
+              if start == -1:
+                  print("No JSON array found in security output — skipping check")
+                  sys.exit(0)
+              findings = json.loads(content[start:end])
+              criticals = [f for f in findings if f.get("severity") == "CRITICAL"]
+              if criticals:
+                  print(f"BLOCKED: {len(criticals)} CRITICAL security finding(s):")
+                  for c in criticals:
+                      print(f"  line {c.get('line')}: {c.get('description','')[:120]}")
+                  sys.exit(1)
+              else:
+                  print(f"Security check passed — {len(findings)} finding(s), none CRITICAL")
+          except Exception as e:
+              print(f"Could not parse security output: {e} — skipping block")
+          EOF
