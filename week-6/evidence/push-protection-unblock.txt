@@ -1,0 +1,29 @@
+Push protection unblock URL — Session A
+========================================
+
+Result: GitHub push protection did NOT fire on the first push of
+branch week-6/session-a. The four teaching-fixture literals
+(JWT_SECRET, DB_PASSWORD, SMS_API_KEY, SECRET_KEY) all landed on the
+remote without prompting an unblock workflow.
+
+Why the brief expected it to fire: the SMS_API_KEY value
+"sms_live_key_abc123xyz" superficially resembles a Stripe-style
+sk_live_ pattern. GitHub's built-in secret scanner doesn't flag the
+custom "sms_live_" prefix, and the other three values
+(JWT_SECRET = "HealthTrack$JWT$2024", DB_PASSWORD = "Adm1n$ecure2024",
+SECRET_KEY = "dev-secret-change-in-prod") are not provider-format
+credentials, so no provider partner-pattern matched either. Push
+protection only blocks on patterns it recognises with high
+confidence.
+
+Coverage caveat: this only confirms that GitHub's PUSH-time scan was
+quiet. Bandit + safety in the CI pipeline still flag the literals as
+hardcoded credentials inside `app/` (which is exactly what the
+"Block merge if output contains CRITICAL" gate depends on). See
+SECURITY_FIXTURES.md for the policy decision.
+
+If push protection DOES fire on a future push (e.g. a Session B/C/D
+push that adds another fixture-shaped string), the workflow is:
+1. Copy the unblock URL from the rejection message into this file.
+2. Open the URL, classify as "Used in tests" or "False positive".
+3. Confirm the unblock and re-push.
