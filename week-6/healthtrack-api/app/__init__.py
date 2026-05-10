@@ -22,4 +22,12 @@ def create_app():
     app.register_blueprint(vitals_bp)
     app.register_blueprint(patients_bp)
     app.register_blueprint(alerts_bp)
+
+    @app.get("/health")
+    def health():
+        # Basic liveness probe consumed by the Docker HEALTHCHECK and the
+        # docker-compose health-gated startup. Session C extends this with
+        # database + cache sub-checks for the bonus rubric.
+        return {"status": "ok"}, 200
+
     return app

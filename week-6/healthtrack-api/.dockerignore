@@ -1,0 +1,32 @@
+# Python build / cache artefacts
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+*.egg-info
+
+# Local env (NEVER bake secrets into images)
+.env
+.env.*
+
+# Source-control metadata
+.git
+.gitignore
+
+# Test artefacts
+tests/__pycache__
+.pytest_cache
+htmlcov
+.coverage
+coverage.xml
+
+# Skill example fixtures (not needed in the runtime image)
+skills/*/examples/
+
+# IDE / OS noise
+.vscode
+.idea
+.DS_Store
+
+# Local-only exploration
+_scratch

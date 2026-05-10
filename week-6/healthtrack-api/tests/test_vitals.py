@@ -8,6 +8,17 @@ import sys, os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from app.vitals import record_vitals, get_patient_vitals, calculate_alert_threshold
+from app import create_app
+
+
+class TestHealthEndpoint:
+
+    def test_health_returns_200_and_ok_body(self):
+        app = create_app()
+        client = app.test_client()
+        response = client.get("/health")
+        assert response.status_code == 200
+        assert response.get_json() == {"status": "ok"}
 
 
 class TestRecordVitals:

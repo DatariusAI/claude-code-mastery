@@ -1,0 +1,47 @@
+
+Week 6 Mini Project — Validation
+==================================================
+
+1. GitHub Actions CI Workflow
+  ✓  ci.yml exists at .github/workflows/ci.yml
+  ✓  Triggers on pull_request
+  ✓  Triggers on push to main
+  ✓  Has a test job
+  ✓  Installs Python dependencies
+  ✓  Uses GitHub secrets (not hardcoded keys)
+  ✓  Checks out code with actions/checkout
+  ✓  Enforces coverage threshold
+  ✓  Jobs have dependency ordering with needs:
+
+2. Dockerfile
+  ✓  Dockerfile exists at project root
+  ✓  Uses multi-stage build (AS builder + AS runtime)
+  ✓  Uses a slim/minimal base image
+  ✓  Runs as non-root user
+  ✓  Has HEALTHCHECK instruction
+  ✓  Exposes a port with EXPOSE
+  ✓  Sets Python env vars (PYTHONDONTWRITEBYTECODE/PYTHONUNBUFFERED)
+  ⚠  No .env file reference in Dockerfile — secrets come from runtime
+       Note: Never COPY .env into the image. Use env_file in docker-compose instead.
+
+3. docker-compose.yml
+  ✗  docker-compose.yml exists at project root
+       Fix: Create with Claude Code: generate docker-compose for HealthTrack with api + postgres + redis
+
+4. Environment Configuration
+  ✗  .env.example exists and is committed
+       Fix: Create with Claude Code: generate a .env.example for HealthTrack API
+  ✓  .env is gitignored (real secrets not committed)
+
+5. PR Template (bonus)
+  ✓  PR template has Summary/Description section
+  ✓  PR template has Testing section
+  ✓  pull_request_template.md found — bonus complete ✓
+
+==================================================
+✗ 2 check(s) failed:
+  • docker-compose.yml exists at project root
+  • .env.example exists and is committed
+
+⚠ 1 warning(s):
+  • No .env file reference in Dockerfile — secrets come from runtime
