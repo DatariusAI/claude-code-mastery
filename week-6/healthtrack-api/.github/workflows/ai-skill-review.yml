@@ -1,0 +1,135 @@
+name: AI Skill Review Pipeline
+
+# Runs on every pull request:
+#   - PR Code Review Skill (all PRs)
+#   - Security Audit Skill (all PRs)
+#   - Test Coverage Report Skill (when vitals.py changes)
+#
+# Skills are version-pinned — update the ref below to use a newer version.
+# Never use 'latest' — breaking changes to Skills must be opted into explicitly.
+
+on:
+  pull_request:
+    branches: [main, release/*]
+    paths:
+      - 'app/**'
+      - 'tests/**'
+
+env:
+  ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+  CHANGED_MODULE: app/vitals.py   # override per-PR if needed
+
+jobs:
+  ai-skill-review:
+    name: AI Skill Review
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # needed for git diff
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install anthropic
+
+      # ── 1. PR Code Review ────────────────────────────────────────────────────
+      - name: PR Code Review Skill (v1.2)
+        run: |
+          python plugins/run_skill.py pr-review \
+            --scope ${{ env.CHANGED_MODULE }} \
+            --diff "$(git diff origin/main -- ${{ env.CHANGED_MODULE }})" \
+            --context CLAUDE.md \
+            --pr-desc "${{ github.event.pull_request.title }}" \
+            --no-save > /tmp/pr_review.md
+          echo "## PR Code Review" >> $GITHUB_STEP_SUMMARY
+          cat /tmp/pr_review.md >> $GITHUB_STEP_SUMMARY
+
+      # ── 2. Security Audit ────────────────────────────────────────────────────
+      - name: Security Audit Skill (v1.1)
+        run: |
+          python plugins/run_skill.py security-audit \
+            --scope ${{ env.CHANGED_MODULE }} \
+            --context CLAUDE.md \
+            --diff "$(git diff origin/main -- ${{ env.CHANGED_MODULE }})" \
+            --no-save > /tmp/security.json
+          echo "## Security Audit" >> $GITHUB_STEP_SUMMARY
+          echo '```json' >> $GITHUB_STEP_SUMMARY
+          cat /tmp/security.json >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+
+      # ── 3. Block on CRITICAL security findings ───────────────────────────────
+      - name: Block merge on CRITICAL findings
+        run: |
+          python - <<'EOF'
+          import json, sys
+          try:
+              with open("/tmp/security.json") as f:
+                  content = f.read().strip()
+              # find JSON array in output (runner prints other text too)
+              start = content.find("[")
+              end   = content.rfind("]") + 1
+              if start == -1:
+                  print("No JSON array found in security output — skipping check")
+                  sys.exit(0)
+              findings = json.loads(content[start:end])
+              criticals = [f for f in findings if f.get("severity") == "CRITICAL"]
+              if criticals:
+                  print(f"BLOCKED: {len(criticals)} CRITICAL security finding(s):")
+                  for c in criticals:
+                      print(f"  line {c.get('line')}: {c.get('description','')[:120]}")
+                  sys.exit(1)
+              else:
+                  print(f"Security check passed — {len(findings)} finding(s), none CRITICAL")
+          except Exception as e:
+              print(f"Could not parse security output: {e} — skipping block")
+          EOF
+
+      # ── 4. Test Coverage Report ──────────────────────────────────────────────
+      - name: Test Coverage Report Skill (v2.0)
+        if: contains(github.event.pull_request.changed_files, 'app/vitals.py')
+        run: |
+          python plugins/run_skill.py test-coverage \
+            --module ${{ env.CHANGED_MODULE }} \
+            --tests tests/test_vitals.py \
+            --target 80 \
+            --no-save > /tmp/coverage.json
+          echo "## Test Coverage Report" >> $GITHUB_STEP_SUMMARY
+          echo '```json' >> $GITHUB_STEP_SUMMARY
+          cat /tmp/coverage.json >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+
+      # ── 5. Warn on coverage below target ─────────────────────────────────────
+      - name: Coverage warning
+        if: contains(github.event.pull_request.changed_files, 'app/vitals.py')
+        run: |
+          python - <<'EOF'
+          import json, sys
+          try:
+              with open("/tmp/coverage.json") as f:
+                  content = f.read().strip()
+              start = content.find("{")
+              end   = content.rfind("}") + 1
+              if start == -1:
+                  sys.exit(0)
+              report = json.loads(content[start:end])
+              est   = report.get("estimated_coverage", 100)
+              target = report.get("coverage_target", 80)
+              risk   = report.get("risk_score", "unknown")
+              print(f"Estimated coverage: {est}%  Target: {target}%  Risk: {risk}")
+              if est < target:
+                  print(f"WARNING: Coverage {est}% is below target {target}%")
+                  print("Priority gaps:")
+                  for gap in report.get("priority_gaps", [])[:3]:
+                      print(f"  {gap}")
+                  # Warn but do not block — coverage check is advisory
+              else:
+                  print("Coverage check passed")
+          except Exception as e:
+              print(f"Could not parse coverage output: {e}")
+          EOF

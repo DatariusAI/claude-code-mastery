@@ -1,0 +1,38 @@
+
+[1mWeek 6 Mini Project — Validation[0m
+==================================================
+
+[1m1. GitHub Actions CI Workflow[0m
+  [92m✓[0m  ci.yml exists at .github/workflows/ci.yml
+  [92m✓[0m  Triggers on pull_request
+  [92m✓[0m  Triggers on push to main
+  [92m✓[0m  Has a test job
+  [92m✓[0m  Installs Python dependencies
+  [92m✓[0m  Uses GitHub secrets (not hardcoded keys)
+  [92m✓[0m  Checks out code with actions/checkout
+  [92m✓[0m  Enforces coverage threshold
+  [92m✓[0m  Jobs have dependency ordering with needs:
+
+[1m2. Dockerfile[0m
+  [91m✗[0m  Dockerfile exists at project root
+       Fix: Create with Claude Code: generate a production Dockerfile for HealthTrack API
+
+[1m3. docker-compose.yml[0m
+  [91m✗[0m  docker-compose.yml exists at project root
+       Fix: Create with Claude Code: generate docker-compose for HealthTrack with api + postgres + redis
+
+[1m4. Environment Configuration[0m
+  [91m✗[0m  .env.example exists and is committed
+       Fix: Create with Claude Code: generate a .env.example for HealthTrack API
+  [92m✓[0m  .env is gitignored (real secrets not committed)
+
+[1m5. PR Template (bonus)[0m
+  [92m✓[0m  PR template has Summary/Description section
+  [92m✓[0m  PR template has Testing section
+  [92m✓[0m  pull_request_template.md found — bonus complete ✓
+
+==================================================
+[1m[91m✗ 3 check(s) failed:[0m
+  • Dockerfile exists at project root
+  • docker-compose.yml exists at project root
+  • .env.example exists and is committed

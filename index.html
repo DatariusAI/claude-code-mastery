@@ -189,7 +189,7 @@
   <button class="week-tab" data-week="3" role="tab"><span class="status-dot complete"></span>W 03 &middot; SDLC &amp; Gov</button>
   <button class="week-tab" data-week="4" role="tab"><span class="status-dot complete"></span>W 04 &middot; MCP</button>
   <button class="week-tab" data-week="5" role="tab"><span class="status-dot complete"></span>W 05 &middot; Multi-Agent</button>
-  <button class="week-tab" data-week="6" role="tab"><span class="status-dot upcoming"></span>W 06 &middot; CI/CD</button>
+  <button class="week-tab" data-week="6" role="tab"><span class="status-dot in-progress"></span>W 06 &middot; Ship It</button>
   <button class="week-tab" data-week="7" role="tab"><span class="status-dot upcoming"></span>W 07 &middot; Capstone</button>
 </div>
 
@@ -1539,42 +1539,118 @@ flowchart LR
 <div class="week-panel" data-week-panel="6">
   <div class="sub-tabs">
     <button class="sub-tab active" data-subtab="w6-overview">Week Overview</button>
-    <button class="sub-tab" data-subtab="w6-project">Mini Project &mdash; Governance Suite</button>
+    <button class="sub-tab" data-subtab="w6-project">Mini Project &mdash; Ship It</button>
   </div>
   <div class="sub-panel active" data-subpanel="w6-overview">
     <div class="week-overview-container">
-      <h2><span>Week 6</span> &mdash; CI/CD</h2>
-      <p class="week-overview-desc">Security, governance, performance economics, and measurement frameworks.</p>
+      <h2><span>Week 6</span> &mdash; Ship It: CI/CD &amp; Docker</h2>
+      <p class="week-overview-desc">Building a complete CI/CD pipeline for HealthTrack: GitHub Actions with lint, test, coverage, security, and AI-Skill review jobs; a multi-stage production Dockerfile with non-root user and HEALTHCHECK; and a docker-compose stack with api, postgres, and redis health-checked.</p>
       <div class="session-card">
         <div class="session-num">Session 11</div>
-        <h3>Security Risk &amp; Governance</h3>
-        <p class="session-date">3 May 2025</p>
+        <h3>GitHub Workflows &amp; PR Automation</h3>
+        <p class="session-date">3 May 2026</p>
         <ul>
-          <li>Security scanning with AI assistance</li>
-          <li>Governance frameworks for AI-generated code</li>
-          <li>Compliance and audit trails</li>
-          <li>Risk assessment methodologies</li>
+          <li>GitHub Actions workflow YAML structure</li>
+          <li>Multi-job pipelines with needs: dependency ordering</li>
+          <li>Coverage thresholds, secret references, job summaries</li>
+          <li>PR templates and CI as a quality gate</li>
         </ul>
       </div>
       <div class="session-card">
         <div class="session-num">Session 12</div>
-        <h3>Performance Economics &amp; Measurement</h3>
-        <p class="session-date">9 May 2025</p>
+        <h3>Docker &amp; Deployment</h3>
+        <p class="session-date">9 May 2026</p>
         <ul>
-          <li>Measuring AI-assisted development ROI</li>
-          <li>Token usage optimization</li>
-          <li>Quality metrics and benchmarks</li>
-          <li>Cost-benefit analysis frameworks</li>
+          <li>Multi-stage Dockerfile patterns and image-size discipline</li>
+          <li>Non-root containers and HEALTHCHECK semantics</li>
+          <li>docker-compose service composition and health-gated startup</li>
+          <li>Environment variables, .env.example, secret hygiene</li>
         </ul>
       </div>
     </div>
   </div>
   <div class="sub-panel" data-subpanel="w6-project">
-    <div class="coming-soon">
-      <div class="coming-soon-icon">&#9881;</div>
-      <h3>Coming Soon</h3>
-      <p>The Governance Suite mini project will be available when Week 6 begins on May 3.</p>
+
+    <!-- Local nav (matching Week 5 mini-project-nav pattern) -->
+    <div class="mini-project-nav">
+      <ul>
+        <li><a href="#w6p-overview">Overview</a></li>
+        <li><a href="#w6p-pipeline">CI Pipeline</a></li>
+        <li><a href="#w6p-dockerfile">Dockerfile</a></li>
+        <li><a href="#w6p-compose">Compose Stack</a></li>
+        <li><a href="#w6p-validation">Validation</a></li>
+      </ul>
     </div>
+
+    <header class="hero" id="w6p-overview">
+      <h1>Ship It &mdash; CI/CD &amp; Docker for HealthTrack</h1>
+      <p>Full GitHub Actions pipeline + multi-stage Dockerfile + 3-service compose stack</p>
+      <div class="badge">4 jobs &bull; multi-stage Dockerfile &bull; 3-service stack &bull; 100-pt rubric</div>
+    </header>
+
+    <section>
+      <h2><span>#1</span> Project Overview</h2>
+      <p class="section-desc">Four-part build for the HealthTrack patient-vitals API: a 4-job GitHub Actions pipeline with an AI-Skill CRITICAL gate, a multi-stage non-root Dockerfile, a 3-service compose stack with health-gated startup, and an end-to-end test that proves a real PR triggers the full pipeline.</p>
+      <div class="parts-grid">
+        <div class="part-card">
+          <div class="part-num">Part 1</div>
+          <h3>CI Pipeline</h3>
+          <ul>
+            <li>4 jobs: lint &rarr; test &amp; security &rarr; ai-skills</li>
+            <li>Coverage gate at 80% &middot; pip caching</li>
+            <li>AI-Skill gate blocks merge on CRITICAL findings</li>
+          </ul>
+        </div>
+        <div class="part-card">
+          <div class="part-num">Part 2</div>
+          <h3>Dockerfile</h3>
+          <ul>
+            <li>Multi-stage: builder + slim runtime</li>
+            <li>Non-root user &middot; HEALTHCHECK instruction</li>
+            <li>Python env hardening &middot; minimal layer count</li>
+          </ul>
+        </div>
+        <div class="part-card">
+          <div class="part-num">Part 3</div>
+          <h3>docker-compose</h3>
+          <ul>
+            <li>3 services: api + postgres + redis</li>
+            <li>Health-gated startup (depends_on: condition: service_healthy)</li>
+            <li>.env.example committed &middot; .env gitignored</li>
+          </ul>
+        </div>
+        <div class="part-card">
+          <div class="part-num">Part 4</div>
+          <h3>End-to-End Test</h3>
+          <ul>
+            <li>Real PR triggers full pipeline on GitHub</li>
+            <li>Evidence: green Actions tab + compose ps + curl /health</li>
+            <li>Proves the gate fires on real CRITICAL findings</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="deliverables-section">
+        <h2><span>Deliverables</span> Checklist</h2>
+        <ul class="checklist">
+          <li><span class="check-icon"></span> .github/workflows/ci.yml</li>
+          <li><span class="check-icon"></span> .github/pull_request_template.md (customised)</li>
+          <li><span class="check-icon"></span> Dockerfile (multi-stage)</li>
+          <li><span class="check-icon"></span> .dockerignore</li>
+          <li><span class="check-icon"></span> docker-compose.yml (3 services)</li>
+          <li><span class="check-icon"></span> .env.example (committed)</li>
+          <li><span class="check-icon"></span> .env (gitignored)</li>
+          <li><span class="check-icon"></span> /health endpoint (with database + cache sub-checks)</li>
+          <li><span class="check-icon"></span> SECURITY_FIXTURES.md (teaching-fixture documentation)</li>
+          <li><span class="check-icon"></span> REPORT.md (rubric reflection answers)</li>
+        </ul>
+      </div>
+
+      <div class="repo-link-section">
+        <p class="section-desc">Repository link will appear upon submission.</p>
+      </div>
+    </section>
+
   </div>
 </div>
 
@@ -1764,6 +1840,7 @@ mermaid.initialize({
   var mermaidRenderedW3 = false;
   var mermaidRenderedW4 = false;
   var mermaidRenderedW5 = false;
+  var mermaidRenderedW6 = false;
   var d3Initialized = true; // D3 already runs above
 
   function renderMermaidForPanel(panelSelector, flagName) {
@@ -1783,6 +1860,7 @@ mermaid.initialize({
       if (flagName === 'w3') mermaidRenderedW3 = true;
       if (flagName === 'w4') mermaidRenderedW4 = true;
       if (flagName === 'w5') mermaidRenderedW5 = true;
+      if (flagName === 'w6') mermaidRenderedW6 = true;
     }).catch(function(err) {
       console.warn('Mermaid render error:', err);
     });
@@ -1811,6 +1889,11 @@ mermaid.initialize({
   function renderMermaidW5() {
     if (mermaidRenderedW5) return;
     renderMermaidForPanel('[data-subpanel="w5-project"]', 'w5');
+  }
+
+  function renderMermaidW6() {
+    if (mermaidRenderedW6) return;
+    renderMermaidForPanel('[data-subpanel="w6-project"]', 'w6');
   }
 
   // Sub-tabs (delegation)
@@ -1845,6 +1928,9 @@ mermaid.initialize({
       }
       if (subtabId === 'w5-project') {
         setTimeout(renderMermaidW5, 150);
+      }
+      if (subtabId === 'w6-project') {
+        setTimeout(renderMermaidW6, 150);
       }
     }
   });
@@ -1883,6 +1969,12 @@ mermaid.initialize({
           setTimeout(renderMermaidW5, 150);
         }
       }
+      if (week === '6') {
+        var projectTab6 = document.querySelector('[data-subpanel="w6-project"]');
+        if (projectTab6 && projectTab6.classList.contains('active')) {
+          setTimeout(renderMermaidW6, 150);
+        }
+      }
     });
   });
 
@@ -1900,6 +1992,9 @@ mermaid.initialize({
     el.dataset.original = el.innerHTML;
   });
   document.querySelectorAll('[data-subpanel="w5-project"] .mermaid').forEach(function(el) {
+    el.dataset.original = el.innerHTML;
+  });
+  document.querySelectorAll('[data-subpanel="w6-project"] .mermaid').forEach(function(el) {
     el.dataset.original = el.innerHTML;
   });
 })();

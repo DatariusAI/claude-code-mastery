@@ -1,0 +1,33 @@
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+.DS_Store
+
+# Environment files (NEVER commit real secrets)
+.env
+.env.*
+!.env.example
+
+# Test artifacts
+.pytest_cache/
+htmlcov/
+.coverage
+coverage.xml
+
+# Logs
+*.log
+
+# Docker build artifacts
+.docker-build/
+
+# IDE
+.vscode/
+.idea/
+
+# Local-only exploration
+_scratch/
