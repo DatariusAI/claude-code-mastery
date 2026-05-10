@@ -55,6 +55,9 @@ jobs:
       ai_skills_enabled: ${{ steps.check.outputs.enabled }}
     steps:
       - id: check
+        # Override the workflow-level working-directory: this job has no
+        # checkout step, so cd into week-6/healthtrack-api would fail.
+        working-directory: .
         env:
           ANTHROPIC_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: |
