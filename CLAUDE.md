@@ -12,7 +12,7 @@ Central portfolio for the Analytics Vidhya "Claude Code Mastery: AI-Augmented So
 - **Week 4: COMPLETE** — MCP Engineering Intelligence Platform: audit logger (JSONL + SHA-256), 3 typed GitHub MCP wrappers, 2 chained workflows (Morning Brief + Incident Triage), CLAUDE.md + ANSWERS.md + 3 integration tests, governance mapping
 - **Week 5: COMPLETE** — Multi-Agent Pipeline & Skills Library: 2-agent code-review pipeline (Architect + Security in separate sessions) on OrderFlow, 12 OWASP-categorised findings, both prompts packaged as v1.0.0 Skills with 3-test tables and examples/, 100/100 self-review (Pass 2), 9-section REPORT, 4 dashboard Mermaid diagrams
 - **Week 6: COMPLETE** — Ship It CI/CD: HealthTrack Flask app with 6-stage CI pipeline, multi-stage Dockerfile, docker-compose stack, /health endpoint with sub-checks, 3 Skills (pr-review v1.2.0, security-audit v1.1.0, test-coverage v2.0.1)
-- **Week 7: IN PROGRESS** — Capstone Notification Service API (Python/Flask). See week-7/CAPSTONE_PLAN.md for scope and session plan. Session A: scaffold dropped, REQ-007 verified, dashboard flipped to in-progress.
+- **Week 7: IN PROGRESS** — Capstone Notification Service API (Python/Flask). See week-7/CAPSTONE_PLAN.md for scope. As of Session B: REQ-007 test classes verified across unit + integration + regression suites (all green at 80%+ coverage), CI pipeline documented with 6 stages and coverage gate.
 
 ## How This Repo Is Organized
 
