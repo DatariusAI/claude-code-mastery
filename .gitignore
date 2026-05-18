@@ -35,3 +35,13 @@ coverage/
 # PDF assembly scratch directories — submission markdown lives here pre-render
 .build/
 **/.build/
+
+# Week 7 capstone
+week-7/.build/
+week-7/capstone-py/venv/
+week-7/capstone-py/__pycache__/
+week-7/capstone-py/**/__pycache__/
+week-7/capstone-py/.pytest_cache/
+week-7/capstone-py/.coverage
+week-7/capstone-py/htmlcov/
+week-7/capstone-py/.audit-log.jsonl

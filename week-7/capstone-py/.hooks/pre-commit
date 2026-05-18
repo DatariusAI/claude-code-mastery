@@ -1,0 +1,44 @@
+#!/bin/sh
+# ============================================================
+# Pre-Commit Hook — Governance Validation (Python)
+# Session 6: Hooks, Governance Controls & Logging
+#
+# Install:
+#   cp .hooks/pre-commit .git/hooks/pre-commit
+#   chmod +x .git/hooks/pre-commit
+# ============================================================
+
+echo "🔍 Running pre-commit governance checks..."
+
+# ── 1. Lint ───────────────────────────────────────────────────────────────────
+echo "  [1/3] flake8 lint..."
+flake8 src/ tests/
+if [ $? -ne 0 ]; then
+  echo "❌ COMMIT BLOCKED: flake8 errors found. Fix before committing."
+  exit 1
+fi
+echo "  ✅ Lint passed"
+
+# ── 2. Unit tests ─────────────────────────────────────────────────────────────
+echo "  [2/3] pytest unit tests..."
+EMAIL_PROVIDER=mock pytest tests/unit/ -q --no-header
+if [ $? -ne 0 ]; then
+  echo "❌ COMMIT BLOCKED: Unit tests failed."
+  exit 1
+fi
+echo "  ✅ Unit tests passed"
+
+# ── 3. Audit log entry ────────────────────────────────────────────────────────
+echo "  [3/3] Writing governance audit entry..."
+
+AUDIT_FILE=".audit-log.jsonl"
+TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "unknown")
+STAGED=$(git diff --cached --name-only | tr '\n' ',' | sed 's/,$//')
+USER=$(git config user.email 2>/dev/null || echo "unknown")
+
+echo "{\"timestamp\":\"$TIMESTAMP\",\"event\":\"pre-commit\",\"branch\":\"$BRANCH\",\"user\":\"$USER\",\"staged_files\":\"$STAGED\",\"status\":\"approved\"}" >> "$AUDIT_FILE"
+echo "  ✅ Audit entry written to $AUDIT_FILE"
+
+echo ""
+echo "✅ All governance checks passed — commit approved."

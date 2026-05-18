@@ -190,7 +190,7 @@
   <button class="week-tab" data-week="4" role="tab"><span class="status-dot complete"></span>W 04 &middot; MCP</button>
   <button class="week-tab" data-week="5" role="tab"><span class="status-dot complete"></span>W 05 &middot; Multi-Agent</button>
   <button class="week-tab" data-week="6" role="tab"><span class="status-dot complete"></span>W 06 &middot; Ship It</button>
-  <button class="week-tab" data-week="7" role="tab"><span class="status-dot upcoming"></span>W 07 &middot; Capstone</button>
+  <button class="week-tab" data-week="7" role="tab"><span class="status-dot in-progress"></span>W 07 &middot; Capstone</button>
 </div>
 
 <!-- ================================================================ -->
@@ -1759,7 +1759,7 @@ sequenceDiagram
 <div class="week-panel" data-week-panel="7">
   <div class="sub-tabs">
     <button class="sub-tab active" data-subtab="w7-overview">Week Overview</button>
-    <button class="sub-tab" data-subtab="w7-project">Mini Project &mdash; Capstone</button>
+    <button class="sub-tab" data-subtab="w7-project">Mini Project &mdash; Capstone Notification Service</button>
   </div>
   <div class="sub-panel active" data-subpanel="w7-overview">
     <div class="week-overview-container">
@@ -1776,14 +1776,213 @@ sequenceDiagram
           <li>Final presentations and peer review</li>
         </ul>
       </div>
+      <div class="session-card">
+        <div class="session-num">Session 14</div>
+        <h3>Capstone Implementation &amp; Deployment</h3>
+        <p class="session-date">18 May 2026</p>
+        <ul>
+          <li>Notification Service API &mdash; Python/Flask capstone</li>
+          <li>7-phase AI-augmented SDLC: spec &rarr; code &rarr; tests &rarr; CI/CD &rarr; Docker &rarr; governance &rarr; measurement</li>
+          <li>REQ-007 stats endpoint + 3 test suites + 2 ADRs + pre-commit hook</li>
+          <li>See <a href="https://github.com/DatariusAI/claude-code-mastery/blob/main/week-7/CAPSTONE_PLAN.md">CAPSTONE_PLAN.md</a> for full scope</li>
+        </ul>
+      </div>
     </div>
   </div>
   <div class="sub-panel" data-subpanel="w7-project">
-    <div class="coming-soon">
-      <div class="coming-soon-icon">&#9881;</div>
-      <h3>Coming Soon</h3>
-      <p>The Capstone project details will be available when Week 7 begins on May 9.</p>
+
+    <!-- Local nav (matching Week 6 mini-project-nav pattern) -->
+    <div class="mini-project-nav">
+      <ul>
+        <li><a href="#w7p-overview">Overview</a></li>
+        <li><a href="#w7p-lifecycle">Request Lifecycle</a></li>
+        <li><a href="#w7p-retry">Retry Logic</a></li>
+        <li><a href="#w7p-stats">Stats Pipeline</a></li>
+        <li><a href="#w7p-ci">CI/CD</a></li>
+        <li><a href="#w7p-governance">Governance</a></li>
+      </ul>
     </div>
+
+    <header class="hero" id="w7p-overview">
+      <h1>Capstone &mdash; Notification Service API</h1>
+      <p>Production-grade Flask REST API built end-to-end via the AI-Augmented SDLC</p>
+      <div class="badge">7 phases &bull; 73 tests &bull; 96% coverage &bull; 110/110 rubric &bull; Docker + CI</div>
+    </header>
+
+    <section>
+      <h2><span>#1</span> Project Overview</h2>
+      <p class="section-desc">Seven-phase capstone extending a notification service scaffold with REQ-007 (stats endpoint), three test suites, a 6-stage CI pipeline with coverage gate, Docker deployment, two ADRs, and a pre-commit governance hook. Integrates techniques from all prior weeks: spec-driven development (W2), governance hooks (W3), audit middleware (W4), structured prompts (W5), and CI/CD + Docker (W6).</p>
+      <div class="parts-grid">
+        <div class="part-card">
+          <div class="part-num">Phase 1&ndash;2</div>
+          <h3>Spec &amp; REQ-007</h3>
+          <ul>
+            <li>feature_spec.yaml with REQ-001&ndash;REQ-007</li>
+            <li>get_stats() returns total, by_type, by_status, last_sent</li>
+            <li>Null-type guard &middot; security review (2 LOW findings)</li>
+          </ul>
+        </div>
+        <div class="part-card">
+          <div class="part-num">Phase 3&ndash;4</div>
+          <h3>Tests &amp; CI Gate</h3>
+          <ul>
+            <li>5 unit + 5 integration + 2 regression tests for REQ-007</li>
+            <li>73 total tests &middot; 96% coverage</li>
+            <li>CI coverage gate --cov-fail-under=80</li>
+          </ul>
+        </div>
+        <div class="part-card">
+          <div class="part-num">Phase 5</div>
+          <h3>Docker Deployment</h3>
+          <ul>
+            <li>Multi-stage Dockerfile &middot; non-root appuser</li>
+            <li>docker-compose with healthcheck + mem_limit</li>
+            <li>All 7 endpoints validated live in container</li>
+          </ul>
+        </div>
+        <div class="part-card">
+          <div class="part-num">Phase 6&ndash;7</div>
+          <h3>Governance &amp; Report</h3>
+          <ul>
+            <li>ADR-002 (stats strategy) + ADR-003 (retry error, bonus)</li>
+            <li>Pre-commit hook: flake8 + pytest + JSONL audit log</li>
+            <li>REPORT.md with ROI measurement + demo checklist</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="deliverables-section">
+        <h2><span>Deliverables</span> Checklist</h2>
+        <ul class="checklist">
+          <li><span class="check-icon">&#9744;</span> Scaffold extracted + CAPSTONE_PLAN.md (Session A)</li>
+          <li><span class="check-icon">&#9744;</span> REQ-007 spec + implementation verified (Session A)</li>
+          <li><span class="check-icon">&#9744;</span> Phase 1 risk notes + Phase 2 security review (Session A)</li>
+          <li><span class="check-icon">&#9744;</span> REQ-007 test classes &mdash; unit + integration + regression (Session B)</li>
+          <li><span class="check-icon">&#9744;</span> CI coverage gate --cov-fail-under=80 (Session B)</li>
+          <li><span class="check-icon">&#9744;</span> Docker live validation of all 7 endpoints (Session C)</li>
+          <li><span class="check-icon">&#9744;</span> ADR-002 stats computation strategy (Session C)</li>
+          <li><span class="check-icon">&#9744;</span> ADR-003 retry-history on RuntimeError, bonus (Session C)</li>
+          <li><span class="check-icon">&#9744;</span> docs/metrics-report.md REQ-007 row (Session C)</li>
+          <li><span class="check-icon">&#9744;</span> Pre-commit hook + audit log (Session C)</li>
+          <li><span class="check-icon">&#9744;</span> Docker mem_limit, bonus (Session C)</li>
+          <li><span class="check-icon">&#9744;</span> REPORT.md + ROI measurement (Session D)</li>
+          <li><span class="check-icon">&#9744;</span> Dashboard mini-project panel populated (Session D)</li>
+          <li><span class="check-icon">&#9744;</span> Submission PDF at repo root (Session E)</li>
+          <li><span class="check-icon">&#9744;</span> W7 status dot &rarr; complete (Session E)</li>
+        </ul>
+      </div>
+
+      <div class="repo-link-section">
+        <p>Repository link will appear upon submission.</p>
+      </div>
+    </section>
+
+    <!-- W7 Request Lifecycle -->
+    <section id="w7p-lifecycle">
+      <h2><span>#2</span> Request Lifecycle</h2>
+      <p class="section-desc">Every request flows through the audit middleware before reaching the blueprint route. The notification service validates input, delegates to the email provider, and records history. The audit logger captures the response on the way out.</p>
+      <div class="mermaid-container">
+        <pre class="mermaid">
+flowchart TD
+    Client([Client]) --> AuditIn[audit_logger.before_request]
+    AuditIn --> Route[Blueprint Route]
+    Route --> Validate[NotificationService.validate]
+    Validate -->|valid| Send[NotificationService.send]
+    Validate -->|invalid| Err400([400 Bad Request])
+    Send --> Provider[email_provider]
+    Provider -->|success| Record[_record_history]
+    Provider -->|failure| Retry[Retry Logic]
+    Retry -->|retries left| Provider
+    Retry -->|exhausted| Err500([500 + retry_history])
+    Record --> AuditOut[audit_logger.after_request]
+    Err400 --> AuditOut
+    Err500 --> AuditOut
+    AuditOut --> Client
+        </pre>
+      </div>
+    </section>
+
+    <!-- W7 Retry State Machine -->
+    <section id="w7p-retry">
+      <h2><span>#3</span> Retry State Machine</h2>
+      <p class="section-desc">When the email provider fails, the service retries up to MAX_RETRY_ATTEMPTS times with exponential backoff. Each attempt is logged. On exhaustion, a RuntimeError is raised with retry_history attached as an attribute (see ADR-003).</p>
+      <div class="mermaid-container">
+        <pre class="mermaid">
+stateDiagram-v2
+    [*] --> Attempt1
+    Attempt1 --> Success : provider returns message_id
+    Attempt1 --> Attempt2 : provider raises exception
+    Attempt2 --> Success : provider returns message_id
+    Attempt2 --> Attempt3 : provider raises exception
+    Attempt3 --> Success : provider returns message_id
+    Attempt3 --> Exhausted : provider raises exception
+    Success --> AuditSuccess : record_history status=success
+    AuditSuccess --> [*]
+    Exhausted --> AuditFailed : record_history status=failed
+    AuditFailed --> RaiseError : RuntimeError + retry_history
+    RaiseError --> [*]
+        </pre>
+      </div>
+    </section>
+
+    <!-- W7 Stats Computation Pipeline -->
+    <section id="w7p-stats">
+      <h2><span>#4</span> Stats Computation Pipeline (REQ-007)</h2>
+      <p class="section-desc">GET /api/notifications/stats computes metrics on-demand from the in-memory notification history (ADR-002). A single pass over the bounded list aggregates by_type, by_status, and tracks last_sent. Null-type records are mapped to &ldquo;unknown&rdquo; via a defensive guard.</p>
+      <div class="mermaid-container">
+        <pre class="mermaid">
+flowchart LR
+    History[_notification_history\nlist max 100] --> Iterate[get_stats iterates]
+    Iterate --> ByType[by_type counter\nemail/sms/alert]
+    Iterate --> ByStatus[by_status counter\nsuccess/failed]
+    Iterate --> LastSent[max timestamp\nlast_sent]
+    ByType --> Result[return dict\ntotal + by_type + by_status + last_sent]
+    ByStatus --> Result
+    LastSent --> Result
+        </pre>
+      </div>
+    </section>
+
+    <!-- W7 CI/CD Pipeline -->
+    <section id="w7p-ci">
+      <h2><span>#5</span> CI/CD Pipeline</h2>
+      <p class="section-desc">Six-stage GitHub Actions pipeline: lint gates everything, then unit tests (with coverage gate), integration tests, regression tests, and security audit run in parallel. Docker build is the final stage &mdash; it builds the image, starts the container, and curls /api/health to prove the deployment works.</p>
+      <div class="mermaid-container">
+        <pre class="mermaid">
+flowchart TD
+    Trigger([push / PR]) --> Lint[lint\nflake8 src/ tests/]
+    Lint --> Unit[unit-tests\npytest --cov-fail-under=80]
+    Lint --> Integration[integration-tests\npytest tests/integration/]
+    Lint --> Regression[regression-tests\npytest tests/regression/]
+    Lint --> Security[security\npip-audit]
+    Unit --> Docker[docker-build\nbuild + run + curl /api/health]
+    Integration --> Docker
+    Regression --> Docker
+    Security --> Docker
+    Docker --> Ready([ready to merge])
+        </pre>
+      </div>
+    </section>
+
+    <!-- W7 Governance Flow -->
+    <section id="w7p-governance">
+      <h2><span>#6</span> Governance Flow</h2>
+      <p class="section-desc">The pre-commit hook fires on every commit touching week-7/capstone-py/. It runs flake8, then unit tests, then writes a JSON audit entry to .audit-log.jsonl. Any failure blocks the commit. The hook is installed at the repo root and adapted to cd into the scaffold directory first.</p>
+      <div class="mermaid-container">
+        <pre class="mermaid">
+flowchart TD
+    Commit([git commit]) --> Check{Files in\nweek-7/capstone-py?}
+    Check -->|no| Skip([Skip hook])
+    Check -->|yes| Flake[flake8 src/ tests/]
+    Flake -->|pass| Tests[pytest tests/unit/]
+    Flake -->|fail| Block([COMMIT BLOCKED])
+    Tests -->|pass| Audit[Write .audit-log.jsonl]
+    Tests -->|fail| Block
+    Audit --> Approve([Commit approved])
+        </pre>
+      </div>
+    </section>
+
   </div>
 </div>
 
@@ -1940,6 +2139,7 @@ mermaid.initialize({
   var mermaidRenderedW4 = false;
   var mermaidRenderedW5 = false;
   var mermaidRenderedW6 = false;
+  var mermaidRenderedW7 = false;
   var d3Initialized = true; // D3 already runs above
 
   function renderMermaidForPanel(panelSelector, flagName) {
@@ -1960,6 +2160,7 @@ mermaid.initialize({
       if (flagName === 'w4') mermaidRenderedW4 = true;
       if (flagName === 'w5') mermaidRenderedW5 = true;
       if (flagName === 'w6') mermaidRenderedW6 = true;
+      if (flagName === 'w7') mermaidRenderedW7 = true;
     }).catch(function(err) {
       console.warn('Mermaid render error:', err);
     });
@@ -1993,6 +2194,11 @@ mermaid.initialize({
   function renderMermaidW6() {
     if (mermaidRenderedW6) return;
     renderMermaidForPanel('[data-subpanel="w6-project"]', 'w6');
+  }
+
+  function renderMermaidW7() {
+    if (mermaidRenderedW7) return;
+    renderMermaidForPanel('[data-subpanel="w7-project"]', 'w7');
   }
 
   // Sub-tabs (delegation)
@@ -2030,6 +2236,9 @@ mermaid.initialize({
       }
       if (subtabId === 'w6-project') {
         setTimeout(renderMermaidW6, 150);
+      }
+      if (subtabId === 'w7-project') {
+        setTimeout(renderMermaidW7, 150);
       }
     }
   });
@@ -2074,6 +2283,12 @@ mermaid.initialize({
           setTimeout(renderMermaidW6, 150);
         }
       }
+      if (week === '7') {
+        var projectTab7 = document.querySelector('[data-subpanel="w7-project"]');
+        if (projectTab7 && projectTab7.classList.contains('active')) {
+          setTimeout(renderMermaidW7, 150);
+        }
+      }
     });
   });
 
@@ -2094,6 +2309,9 @@ mermaid.initialize({
     el.dataset.original = el.innerHTML;
   });
   document.querySelectorAll('[data-subpanel="w6-project"] .mermaid').forEach(function(el) {
+    el.dataset.original = el.innerHTML;
+  });
+  document.querySelectorAll('[data-subpanel="w7-project"] .mermaid').forEach(function(el) {
     el.dataset.original = el.innerHTML;
   });
 })();

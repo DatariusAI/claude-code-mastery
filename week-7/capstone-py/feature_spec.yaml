@@ -1,0 +1,129 @@
+# ============================================================
+# FEATURE SPEC — Notification Service API
+# Session: Claude Code Mastery — Week 7, Session 14 (Capstone)
+# ============================================================
+
+feature:
+  name: Notification Service API
+  version: "1.0.0"
+  language: Python 3.11 / Flask
+  priority: high
+  created: "2026-05-17"
+  status: implemented
+
+description: |
+  A RESTful notification service that sends email notifications
+  triggered by application events. Includes retry logic, audit
+  logging, input validation, and health monitoring.
+
+requirements:
+  - id: REQ-001
+    title: Send Email Notification
+    description: POST /api/notifications/send sends an email notification
+    acceptance_criteria:
+      - Returns 200 with { success, message_id } on success
+      - Returns 400 if required fields are missing
+      - Completes within 2000 ms under normal conditions
+    priority: high
+
+  - id: REQ-002
+    title: Retry Failed Sends
+    description: Retry up to MAX_RETRY_ATTEMPTS times with exponential backoff
+    acceptance_criteria:
+      - Retries exactly MAX_RETRY_ATTEMPTS times before failing
+      - Each retry logged with attempt number and error
+      - Returns 500 with retry_history on final failure
+    priority: high
+
+  - id: REQ-003
+    title: Audit Logging
+    description: Every notification attempt written to audit log
+    acceptance_criteria:
+      - Entry includes timestamp, recipient, type, status, attempt_count
+      - Retrievable via GET /api/notifications/audit
+    priority: high
+
+  - id: REQ-004
+    title: Input Validation
+    description: Validate all incoming notification requests
+    acceptance_criteria:
+      - Reject missing to, subject, or type with 400
+      - Validate email format
+      - Return descriptive error messages
+    priority: medium
+
+  - id: REQ-005
+    title: Health Monitoring
+    description: GET /api/health returns service status
+    acceptance_criteria:
+      - Returns { status, uptime, version } with 200
+      - Responds within 100 ms
+    priority: medium
+
+  - id: REQ-006
+    title: Notification History
+    description: Track sent notifications
+    acceptance_criteria:
+      - GET /api/notifications returns last 100 records
+      - Supports ?status=success|failed filter
+    priority: low
+
+  - id: REQ-007
+    title: Notification Statistics
+    description: GET /api/notifications/stats returns aggregate metrics
+    acceptance_criteria:
+      - Returns 200 with { total, by_type, by_status, last_sent }
+      - total reflects the count of records in notification history
+      - by_type groups records by notification type
+      - by_status separates success vs failed counts
+      - last_sent is ISO timestamp of the most recent record, or null on empty history
+      - Returns 200 even when a history record has a null type field
+    priority: medium
+
+tests:
+  unit:
+    target: NotificationService
+    cases:
+      - sends notification successfully
+      - retries on provider failure
+      - exhausts retries and raises
+      - validates missing required fields
+      - validates email format
+      - records to audit log on success
+      - records to audit log on failure
+      - stats empty on start
+      - total increments after send
+      - by_type groups correctly
+      - by_status groups correctly
+      - last_sent is timestamp
+
+  integration:
+    target: Flask API
+    cases:
+      - POST /api/notifications/send returns 200
+      - POST /api/notifications/send returns 400 on missing fields
+      - POST /api/notifications/send returns 500 after retries
+      - GET /api/notifications returns history
+      - GET /api/notifications?status=failed filters correctly
+      - GET /api/notifications/audit returns log
+      - GET /api/health returns 200
+      - GET /api/notifications/stats returns 200 with correct shape
+      - stats total zero initially
+      - stats total increments after send
+      - stats by_type breakdown
+      - stats by_status separates success and failed
+
+  regression:
+    cases:
+      - duplicate message_id guard
+      - null recipient does not crash server
+      - retry count resets between requests
+      - audit log capped at 1000 entries
+      - stats handles null type gracefully (REG-006)
+
+acceptance:
+  all_unit_tests_pass: true
+  all_integration_tests_pass: true
+  code_coverage_above: 80
+  flake8_errors: 0
+  docker_health_check_passes: true

@@ -1,15 +1,17 @@
-# Week 7 — Debugging, Security, Governance & Capstone
+# Week 7 — Capstone: Notification Service API
 
-**Status:** UPCOMING
+A production-grade Notification Service REST API built end-to-end via the AI-Augmented SDLC. The scaffold ships with 6 implemented requirements and 73 passing tests at 96% coverage. The capstone extends it with REQ-007 (stats endpoint), three test suites, a 6-stage CI pipeline with coverage gate, Docker deployment, two Architecture Decision Records, a pre-commit governance hook, and a formal report with ROI measurement.
 
-## Schedule
+## Key Documents
 
-Session 14: Structured Capstone Project (9 May)
+- **[CAPSTONE_PLAN.md](CAPSTONE_PLAN.md)** — The contract: scope, session plan, risk register, success criteria
+- **[capstone-py/README.md](capstone-py/README.md)** — The scaffold's project readme (tech stack, commands, structure)
+- **[REPORT.md](REPORT.md)** — Capstone reflection report (delivered in Session D)
 
-## Mini Project
+## Tech Stack
 
-TBD
+Python 3.11 / Flask 3.1 / pytest / Docker / GitHub Actions
 
-## Artifacts
+## About
 
-_This folder will be populated during Week 7._
+Built with Claude Code as part of the DatariusAI/claude-code-mastery 7-week Analytics Vidhya program. Week 7 capstone.
