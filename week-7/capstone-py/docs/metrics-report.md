@@ -12,7 +12,8 @@
 | CI/CD pipeline (GitHub Actions)| 1    | ~110  |
 | Dockerfile + docker-compose   | 2     | ~70   |
 | Documentation                 | 3     | ~250  |
-| **TOTAL**                     | **15**| **~1,300** |
+| REQ-007 stats endpoint        | 2     | ~30   |
+| **TOTAL**                     | **17**| **~1,330** |
 
 ---
 
@@ -28,7 +29,8 @@
 | CI/CD pipeline          | 1 hr        | 10 min      | 50 min |
 | Dockerfile + compose    | 45 min      | 10 min      | 35 min |
 | Documentation           | 1.5 hrs     | 18 min      | 1h 12m |
-| **TOTAL**               | **11h 20m** | **2h 25m**  | **~78%**|
+| REQ-007 stats endpoint  | 30 min      | 8 min       | 22 min |
+| **TOTAL**               | **11h 50m** | **2h 33m**  | **~78%**|
 
 ---
 
@@ -40,7 +42,7 @@
 | Flake8 errors             | 0      | 0        |
 | All test suites passing   | ✓      | ✓        |
 | Docker health check       | Pass   | Pass     |
-| Spec requirements met     | 6/6    | 6/6      |
+| Spec requirements met     | 7/7    | 7/7      |
 
 ---
 
